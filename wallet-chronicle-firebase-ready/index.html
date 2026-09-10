@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1D084B" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Wallet Chronicle" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <link rel="stylesheet" href="./styles.css" />
+  <title>Wallet Chronicle</title>
+</head>
+<body>
+<div class="shell">
+  <main class="phone">
+    <div class="statusbar"><span>Wallet Chronicle</span><span id="networkState">online</span></div>
+    <div id="configBanner" class="config-banner hidden">Firebase is not configured. Edit <strong>firebase-config.js</strong> with the Web App config from Firebase Console, then reload.</div>
+    <div class="app" id="app">
+      <section class="view active" data-view="loading"><div class="spinner"></div></section>
+
+      <section class="view" data-view="auth">
+        <div class="auth">
+          <div class="logo">W</div>
+          <h1>Wallet Chronicle</h1>
+          <p>Private monthly budgeting, expenses, bills and debt tracking backed by your own Firebase project.</p>
+          <div class="card auth-card">
+            <div class="field"><label>Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" /></div>
+            <div class="field"><label>Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Minimum 6 characters" /></div>
+            <div class="row2" style="margin-top:14px"><button id="loginBtn" class="btn primary">Log In</button><button id="signupBtn" class="btn">Create Account</button></div>
+            <div id="authMessage" class="small" style="margin-top:12px"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" data-view="dashboard">
+        <div class="topbar"><div class="left"><div class="avatar" id="avatar">W</div><div><div class="subtle" id="monthLabel">Current month</div><div class="title">Overview</div></div></div><button id="logoutBtn" class="iconbtn" title="Log out">↪</button></div>
+        <div class="card"><div class="subtle">Remaining Total Balance</div><div class="big" id="dashRemaining">Rp 0</div><span id="dashStatus" class="pill green">No spending yet</span><div class="kpis"><div class="kpi"><div class="subtle">Start Budget</div><div class="v" id="dashBudget">Rp 0</div></div><div class="kpi"><div class="subtle">Spent</div><div class="v" id="dashSpent">Rp 0</div></div><div class="kpi"><div class="subtle">Unpaid</div><div class="v" id="dashUnpaid">0</div></div></div></div>
+        <div class="actions"><button class="btn primary" data-open="expense">Add Expense</button><button class="btn" data-view-go="budgets">Budget</button><button class="btn" data-view-go="bills">Checklist</button></div>
+        <div class="section-head"><strong>Category Remaining</strong><button class="link" data-view-go="categories">Manage</button></div>
+        <div id="dashboardCategories" class="card list"></div>
+        <div class="section-head"><strong>Recent Expenses</strong><button class="link" data-view-go="history">History</button></div>
+        <div id="recentExpenses" class="card list"></div>
+      </section>
+
+      <section class="view" data-view="budgets">
+        <div class="topbar"><div><div class="title">Monthly Budget</div><div class="subtle">Total, category and optional line-item budgets</div></div><button class="iconbtn" data-open="budgetSetup">✎</button></div>
+        <div class="card"><div class="field" style="margin:0"><label>Month</label><input id="budgetMonth" type="month" /></div><div class="big sm" id="budgetTotalLabel">Rp 0</div><div class="kpis"><div class="kpi"><div class="subtle">Spent</div><div class="v" id="budgetSpentLabel">Rp 0</div></div><div class="kpi"><div class="subtle">Left</div><div class="v" id="budgetLeftLabel">Rp 0</div></div><div class="kpi"><div class="subtle">Alerts</div><div class="v" id="budgetAlertLabel">0</div></div></div></div>
+        <div class="section-head"><strong>Category Status</strong><button class="link" data-view-go="categories">Add category</button></div>
+        <div id="budgetCards"></div>
+      </section>
+
+      <section class="view" data-view="categories">
+        <div class="topbar"><div><div class="title">Categories</div><div class="subtle">Nothing is preloaded — create your own structure</div></div><button class="iconbtn" data-open="category">＋</button></div>
+        <div id="categoryList"></div>
+      </section>
+
+      <section class="view" data-view="bills">
+        <div class="topbar"><div><div class="title">Monthly Checklist</div><div class="subtle">New month starts unpaid automatically</div></div><button class="iconbtn" data-open="bill">＋</button></div>
+        <div class="card"><div class="field" style="margin:0"><label>Month</label><input id="billMonth" type="month" /></div></div>
+        <div class="section-head"><strong>Bill templates</strong><span class="subtle">Tap switch to mark paid</span></div>
+        <div id="billList" class="card list"></div>
+      </section>
+
+      <section class="view" data-view="debts">
+        <div class="topbar"><div><div class="title">Debt Tracker</div><div class="subtle">Balance, payments and payoff progress</div></div><button class="iconbtn" data-open="debt">＋</button></div>
+        <div class="card"><div class="subtle">Total Debt Remaining</div><div class="big" id="debtTotal">Rp 0</div></div>
+        <div id="debtList"></div>
+      </section>
+
+      <section class="view" data-view="history">
+        <div class="topbar"><div><div class="title">History</div><div class="subtle">Browse any stored month</div></div><button class="iconbtn" data-open="expense">＋</button></div>
+        <div class="card"><div class="field" style="margin:0"><label>Month</label><input id="historyMonth" type="month" /></div></div>
+        <div id="historySummary" class="card" style="margin-top:10px"></div>
+        <div class="section-head"><strong>Expenses</strong></div>
+        <div id="historyList" class="card list"></div>
+      </section>
+
+      <section class="view" data-view="settings">
+        <div class="topbar"><div><div class="title">Settings</div><div class="subtle">Firebase-backed PWA</div></div><div></div></div>
+        <div class="card list">
+          <div class="item"><div class="grow"><div class="name">Signed in as</div><div class="meta" id="settingsEmail">—</div></div></div>
+          <div class="item"><div class="grow"><div class="name">Budget alert threshold</div><div class="meta">Yellow at 85%; red at 100%+</div></div></div>
+          <div class="item"><div class="grow"><div class="name">Data storage</div><div class="meta">Cloud Firestore under your authenticated UID</div></div></div>
+          <div class="item"><div class="grow"><div class="name">PWA cache</div><div class="meta">Static UI only; Firebase requests are never service-worker cached</div></div></div>
+        </div>
+      </section>
+    </div>
+
+    <nav id="bottomNav" class="bottomnav hidden">
+      <button class="nav active" data-view-go="dashboard"><span class="nicon">⌂</span><span>Home</span></button>
+      <button class="nav" data-view-go="budgets"><span class="nicon">▣</span><span>Budget</span></button>
+      <button class="nav add" data-open="expense">＋</button>
+      <button class="nav" data-view-go="debts"><span class="nicon">◔</span><span>Debt</span></button>
+      <button class="nav" data-view-go="settings"><span class="nicon">•••</span><span>More</span></button>
+    </nav>
+
+    <div id="modal" class="modal hidden"><div class="sheet"><div class="sheet-head"><h3 id="modalTitle">Add</h3><button id="modalClose" class="close">×</button></div><div id="modalBody"></div></div></div>
+    <div id="toast" class="toast">Saved</div>
+  </main>
+</div>
+<script type="module" src="./app.js"></script>
+<script>
+if ('serviceWorker' in navigator) addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(console.error));
+</script>
+</body>
+</html>
