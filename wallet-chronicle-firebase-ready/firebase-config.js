@@ -1,10 +1,9 @@
-// Paste the exact Web App config object from Firebase Console → Project settings → Your apps.
-// Firebase Web config is an identifier, not a database password. Access control is enforced by Auth + Firestore Rules.
 export const firebaseConfig = {
-  apiKey: "REPLACE_ME",
-  authDomain: "REPLACE_ME.firebaseapp.com",
-  projectId: "REPLACE_ME",
-  storageBucket: "REPLACE_ME.firebasestorage.app",
-  messagingSenderId: "REPLACE_ME",
-  appId: "REPLACE_ME"
+  apiKey: "AIzaSyCxgEApErJdGl6Zruj_Y4WhzTwTh3R4qEc",
+  authDomain: "walcon-cdf2c.firebaseapp.com",
+  projectId: "walcon-cdf2c",
+  storageBucket: "walcon-cdf2c.firebasestorage.app",
+  messagingSenderId: "1013220579806",
+  appId: "1:1013220579806:web:34dbb8eff7dcfe916ae54f",
+  measurementId: "G-NFV454QF0C"
 };
