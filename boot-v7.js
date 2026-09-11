@@ -52,7 +52,6 @@ async function bootWalCon() {
     }, 15000);
 
     await import(`./app-bundle.js?v=12&t=${Date.now()}`);
-    await import(`./auth-v12-bundle.js?v=12&t=${Date.now()}`);
     window.__WALCON_APP_LOADED__ = true;
     clearTimeout(timeout);
   } catch (error) {
