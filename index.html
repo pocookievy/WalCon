@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="WalCon" />
-  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="manifest" href="./manifest.webmanifest?v=6" />
   <link rel="apple-touch-icon" href="./icons/icon-192.png" />
-  <link rel="stylesheet" href="./styles-v5.css?v=5" />
+  <link rel="stylesheet" href="./styles-v5.css?v=6" />
   <title>WalCon</title>
 </head>
 <body>
@@ -19,23 +19,63 @@
     <div id="errorBanner" class="banner hidden"></div>
     <div class="app" id="app">
       <section class="view active" data-view="loading"><div class="loader"></div></section>
-      <section class="view" data-view="auth"><div class="auth-wrap"><div class="logo">W</div><h1>Wallet Control</h1><p>Track balances, expenses, budgets and debts with Firebase-backed data.</p><div class="card auth-card"><label>Email<input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="Minimum 6 characters"></label><div class="grid2"><button id="loginBtn" class="btn primary">Log In</button><button id="signupBtn" class="btn">Create Account</button></div><div id="authMessage" class="helper"></div></div></div></section>
-      <section class="view" data-view="home"><div class="topbar"><div><div class="eyebrow" id="homeMonthLabel">Current month</div><h2>Home</h2></div><button id="logoutBtn" class="round">↪</button></div><div class="card hero-card"><div class="eyebrow">Total available balance</div><div class="hero-number" id="homeBalance">Rp 0,00</div><div class="summary3"><div><span>Budget left</span><strong id="homeBudgetLeft">Rp 0,00</strong></div><div><span>Spent</span><strong id="homeSpent">Rp 0,00</strong></div><div><span>Sources</span><strong id="homeSourceCount">0</strong></div></div></div><div class="section-title"><strong>Balance sources</strong><button class="link" data-view-go="balances">Manage</button></div><div id="homeBalances" class="hscroll"></div><div class="section-title"><strong>Expense summary by category</strong><span class="muted" id="graphTotal"></span></div><div class="card graph-card"><div class="donut-wrap"><div id="expenseDonut" class="donut"><div><strong id="donutAmount">Rp 0</strong><span>This month</span></div></div></div><div id="expenseLegend" class="legend"></div></div><div class="section-title"><strong>Recent expenses</strong><button class="link" data-view-go="history">History</button></div><div id="recentExpenses" class="card list"></div></section>
+
+      <section class="view" data-view="auth">
+        <div class="auth-wrap"><div class="logo">W</div><h1>WalCon</h1><p>Track balances, income, expenses, budgets, bills and debts with Firebase-backed data.</p><div class="card auth-card"><label>Email<input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="Minimum 6 characters"></label><div class="grid2"><button id="loginBtn" class="btn primary">Log In</button><button id="signupBtn" class="btn">Create Account</button></div><div id="authMessage" class="helper"></div></div></div>
+      </section>
+
+      <section class="view" data-view="home">
+        <div class="topbar"><div><div class="eyebrow" id="homeMonthLabel">Current month</div><h2>Home</h2></div><button id="logoutBtn" class="round">↪</button></div>
+        <div class="card hero-card"><div class="eyebrow">Total available balance</div><div class="hero-number" id="homeBalance">Rp 0,00</div><div class="summary3"><div><span>Budget left</span><strong id="homeBudgetLeft">Rp 0,00</strong></div><div><span>Spent</span><strong id="homeSpent">Rp 0,00</strong></div><div><span>Income</span><strong id="homeIncome">Rp 0,00</strong></div></div></div>
+        <div class="section-title"><strong>Balance sources</strong><button class="link" data-view-go="balances">Manage</button></div><div id="homeBalances" class="hscroll"></div>
+        <div class="section-title"><strong>Expense summary by category</strong><span class="muted" id="graphTotal"></span></div><div class="card graph-card"><div class="donut-wrap"><div id="expenseDonut" class="donut"><div><strong id="donutAmount">Rp 0</strong><span>This month</span></div></div></div><div id="expenseLegend" class="legend"></div></div>
+        <div class="grid2" style="margin-top:12px"><button class="btn primary" data-open-transaction="expense">Add Expense</button><button class="btn" data-open-transaction="income">Add Income</button></div>
+        <div class="section-title"><strong>Recent transactions</strong><button class="link" data-view-go="history">History</button></div><div id="recentExpenses" class="card list"></div>
+      </section>
+
       <section class="view" data-view="balances"><div class="topbar"><div><div class="eyebrow">Source of funds</div><h2>Balances</h2></div><button class="round" data-open="balance">＋</button></div><div class="card"><div class="eyebrow">Total balance</div><div class="hero-number small" id="balanceTotal">Rp 0,00</div></div><div id="balanceList" class="stack"></div></section>
+
       <section class="view" data-view="categories"><div class="topbar"><div><div class="eyebrow">Editable structure</div><h2>Categories & line items</h2></div><button class="round" data-open="category">＋</button></div><div class="filter-row" id="categoryFilters"><button class="chip active" data-filter="all">All</button><button class="chip" data-filter="income">Income</button><button class="chip" data-filter="need">Needs</button><button class="chip" data-filter="want">Wants</button><button class="chip" data-filter="debt">Debt</button></div><div id="categoryList" class="stack"></div></section>
-      <section class="view" data-view="expense"><div class="topbar"><div><div class="eyebrow">Transaction entry</div><h2>Add expense</h2></div><div></div></div><form id="expenseForm" class="card form-card"><div class="budget-mode"><label class="switchline"><input id="expenseLinked" type="checkbox" checked><span>Link this expense to monthly budget</span></label><div id="budgetMatchHint" class="helper">Choose a category and line item that has a budget this month.</div></div><label>Category<select id="expenseCategory" required><option value="">Select Category</option></select></label><label>Line item<select id="expenseLine" required><option value="">Select Line Item</option></select></label><label>Transaction name<input id="expenseName" required placeholder="e.g. Weekly groceries"></label><div class="grid2"><label>Date<input id="expenseDate" type="date" required></label><label>Payment method<select id="expenseSource" required><option value="">Select source of fund</option></select></label></div><label>Amount (IDR)<input id="expenseAmount" class="idr-input" inputmode="decimal" required placeholder="0,00"></label><label>Notes<textarea id="expenseNotes" placeholder="Optional notes"></textarea></label><label>Bill photo / receipt<input id="expenseReceipt" type="file" accept="image/*" capture="environment"><span class="helper">Optional. Stored in Firebase Storage under your account.</span></label><button class="btn primary full" type="submit">Save Expense</button></form></section>
+
+      <section class="view" data-view="transaction">
+        <div class="topbar"><div><div class="eyebrow">Transaction entry</div><h2 id="transactionTitle">Add expense</h2></div><div></div></div>
+        <div class="filter-row"><button class="chip active" data-transaction-type="expense">Expense</button><button class="chip" data-transaction-type="income">Income</button></div>
+        <form id="transactionForm" class="card form-card">
+          <div id="budgetModeBlock" class="budget-mode"><label class="switchline"><input id="transactionLinked" type="checkbox" checked><span>Link this expense to monthly budget</span></label><div id="budgetMatchHint" class="helper">Choose a category and line item that has a budget this month.</div></div>
+          <label>Category<select id="transactionCategory" required><option value="">Select Category</option></select></label>
+          <label>Line item<select id="transactionLine" required><option value="">Select Line Item</option></select></label>
+          <label>Transaction name<input id="transactionName" required placeholder="e.g. Weekly groceries"></label>
+          <div class="grid2"><label>Date<input id="transactionDate" type="date" required></label><label><span id="sourceLabelText">Payment method</span><select id="transactionSource" required><option value="">Select balance source</option></select></label></div>
+          <label>Amount (IDR)<input id="transactionAmount" class="idr-input" inputmode="decimal" required placeholder="0,00"></label>
+          <label>Notes<textarea id="transactionNotes" placeholder="Optional notes"></textarea></label>
+          <label id="receiptBlock">Bill photo / receipt<input id="transactionReceipt" type="file" accept="image/*" capture="environment"><span id="receiptDriveStatus" class="helper">Connect Google Drive in Settings before uploading a receipt</span></label>
+          <button id="transactionSubmit" class="btn primary full" type="submit">Save Expense</button>
+        </form>
+      </section>
+
       <section class="view" data-view="budgets"><div class="topbar"><div><div class="eyebrow">Line-item budgets</div><h2>Budget</h2></div><button class="round" data-open="budget">＋</button></div><div class="card month-card"><label>Month<input id="budgetMonth" type="month"></label><div class="summary3"><div><span>Budget</span><strong id="budgetTotal">Rp 0,00</strong></div><div><span>Spent linked</span><strong id="budgetSpent">Rp 0,00</strong></div><div><span>Remaining</span><strong id="budgetRemaining">Rp 0,00</strong></div></div></div><div id="budgetList" class="stack"></div></section>
+
       <section class="view" data-view="debts"><div class="topbar"><div><div class="eyebrow">Payoff tracking</div><h2>Debt</h2></div><button class="round" data-open="debt">＋</button></div><div class="card"><div class="eyebrow">Total debt remaining</div><div class="hero-number small" id="debtTotal">Rp 0,00</div></div><div id="debtList" class="stack"></div></section>
+
       <section class="view" data-view="bills"><div class="topbar"><div><div class="eyebrow">Recurring checklist</div><h2>Bills</h2></div><button class="round" data-open="bill">＋</button></div><div class="card month-card"><label>Month<input id="billMonth" type="month"></label></div><div id="billList" class="card list"></div></section>
+
       <section class="view" data-view="history"><div class="topbar"><div><div class="eyebrow">Transactions</div><h2>History</h2></div><div></div></div><div class="card month-card"><label>Month<input id="historyMonth" type="month"></label></div><div id="historyList" class="card list"></div></section>
-      <section class="view" data-view="more"><div class="topbar"><div><div class="eyebrow">Manage</div><h2>More</h2></div><div></div></div><div class="menu-grid"><button class="menu-card" data-view-go="balances"><span>💰</span><strong>Balances</strong><small>Sources of money</small></button><button class="menu-card" data-view-go="categories"><span>▦</span><strong>Categories</strong><small>Categories & line items</small></button><button class="menu-card" data-view-go="bills"><span>✓</span><strong>Bills</strong><small>Monthly checklist</small></button><button class="menu-card" data-view-go="history"><span>◷</span><strong>History</strong><small>Past expenses</small></button><button class="menu-card" data-view-go="settings"><span>⚙</span><strong>Settings</strong><small>App preferences</small></button></div></section>
-      <section class="view" data-view="settings"><div class="topbar"><div><div class="eyebrow">Preferences</div><h2>Settings</h2></div><div></div></div><div class="card form-card"><label>Currency<input value="IDR — Indonesian Rupiah" disabled></label><label>Budget warning threshold (%)<input id="warningThreshold" type="number" min="50" max="99" value="85"></label><button id="saveSettingsBtn" class="btn primary full" type="button">Save Settings</button></div><div class="card info-card"><strong>Firebase account</strong><span id="settingsEmail"></span><small>All finance records are scoped to your authenticated Firebase UID.</small></div></section>
+
+      <section class="view" data-view="more"><div class="topbar"><div><div class="eyebrow">Manage</div><h2>More</h2></div><div></div></div><div class="menu-grid"><button class="menu-card" data-view-go="balances"><span>💰</span><strong>Balances</strong><small>Sources of money</small></button><button class="menu-card" data-view-go="categories"><span>▦</span><strong>Categories</strong><small>Categories & line items</small></button><button class="menu-card" data-view-go="bills"><span>✓</span><strong>Bills</strong><small>Monthly checklist</small></button><button class="menu-card" data-view-go="history"><span>◷</span><strong>History</strong><small>Past transactions</small></button><button class="menu-card" data-view-go="settings"><span>⚙</span><strong>Settings</strong><small>App preferences & Drive</small></button></div></section>
+
+      <section class="view" data-view="settings">
+        <div class="topbar"><div><div class="eyebrow">Preferences</div><h2>Settings</h2></div><div></div></div>
+        <div class="card form-card"><label>Currency<input value="IDR — Indonesian Rupiah" disabled></label><label>Budget warning threshold (%)<input id="warningThreshold" type="number" min="50" max="99" value="85"></label><button id="saveSettingsBtn" class="btn primary full" type="button">Save Settings</button></div>
+        <div class="card info-card"><strong>Firebase account</strong><span id="settingsEmail"></span><small>All finance records are scoped to your authenticated Firebase UID.</small></div>
+        <div class="card form-card" style="margin-top:10px"><div class="eyebrow">Receipt storage</div><h3 style="margin:5px 0 10px">Google Drive</h3><label>Google OAuth Web Client ID<input id="driveClientId" placeholder="xxxxxxxx.apps.googleusercontent.com"></label><div class="helper">Save the Web Client ID from Google Cloud. Authorized JavaScript origin: https://pocookievy.github.io</div><div class="grid2" style="margin-top:12px"><button id="saveDriveClientBtn" type="button" class="btn">Save Client ID</button><button id="driveConnectBtn" type="button" class="btn primary">Connect Google Drive</button></div><div class="info-card"><strong id="driveStatus">Not connected</strong><small>Receipt images are stored in Walcon Project → Receipts.</small><a id="driveFolderLink" class="link" target="_blank" rel="noopener">Open receipt folder</a></div><button id="driveDisconnectBtn" type="button" class="btn danger full">Disconnect Google Drive</button></div>
+      </section>
     </div>
-    <nav id="bottomNav" class="bottomnav hidden"><button class="nav active" data-view-go="home"><span>⌂</span><small>Home</small></button><button class="nav" data-view-go="budgets"><span>▣</span><small>Budget</small></button><button class="nav add" data-view-go="expense">＋</button><button class="nav" data-view-go="debts"><span>◔</span><small>Debt</small></button><button class="nav" data-view-go="more"><span>•••</span><small>More</small></button></nav>
+
+    <nav id="bottomNav" class="bottomnav hidden"><button class="nav active" data-view-go="home"><span>⌂</span><small>Home</small></button><button class="nav" data-view-go="budgets"><span>▣</span><small>Budget</small></button><button class="nav add" data-open-transaction="expense">＋</button><button class="nav" data-view-go="debts"><span>◔</span><small>Debt</small></button><button class="nav" data-view-go="more"><span>•••</span><small>More</small></button></nav>
     <div id="modal" class="modal hidden"><div class="sheet"><div class="sheet-head"><h3 id="modalTitle">Edit</h3><button id="modalClose" class="close">×</button></div><div id="modalBody"></div></div></div><div id="toast" class="toast"></div>
   </main>
 </div>
-<script type="module" src="./app-v5.js?v=5"></script>
-<script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=5',{updateViaCache:'none'}).then(r=>r.update()).catch(console.error));}</script>
+<script type="module" src="./app-v6.js?v=6"></script>
+<script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=6',{updateViaCache:'none'}).then(r=>r.update()).catch(console.error));}</script>
 </body>
 </html>
