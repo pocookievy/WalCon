@@ -1,0 +1,12 @@
+{
+  "name": "walcon-pwa",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "firebase": "11.10.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.9"
+  }
+}
