@@ -14,10 +14,6 @@ window.addEventListener('unhandledrejection', event => {
   showBootError(`WalCon startup error: ${reason}`);
 });
 
-window.addEventListener('walcon-template-error', event => {
-  showBootError(`WalCon default template error: ${event?.detail || 'Unknown error'}`);
-});
-
 try {
   if (!localStorage.getItem('walcon.googleDriveClientId')) {
     localStorage.setItem(
@@ -45,25 +41,23 @@ async function bootWalCon() {
 
     if ('caches' in window) {
       const keys = await caches.keys();
-      await Promise.all(
-        keys.filter(key => key.startsWith('walcon-')).map(key => caches.delete(key))
-      );
+      await Promise.all(keys.filter(key => key.startsWith('walcon-')).map(key => caches.delete(key)));
     }
 
-    if (hadController && sessionStorage.getItem('walcon-sw-reload-v10') !== 'done') {
-      sessionStorage.setItem('walcon-sw-reload-v10', 'done');
+    if (hadController && sessionStorage.getItem('walcon-sw-reload-v11') !== 'done') {
+      sessionStorage.setItem('walcon-sw-reload-v11', 'done');
       location.reload();
       return;
     }
 
     const timeout = setTimeout(() => {
       if (!window.__WALCON_APP_LOADED__) {
-        showBootError('WalCon application code did not finish loading. The bundled app could not initialize within 15 seconds.');
+        showBootError('WalCon application code did not finish loading within 15 seconds.');
       }
     }, 15000);
 
-    await import(`./app-bundle.js?v=10&t=${Date.now()}`);
-    await import(`./template-defaults-bundle.js?v=10&t=${Date.now()}`);
+    await import(`./app-bundle.js?v=11&t=${Date.now()}`);
+    await import(`./auth-hotfix-v11-bundle.js?v=11&t=${Date.now()}`);
     window.__WALCON_APP_LOADED__ = true;
     clearTimeout(timeout);
   } catch (error) {
