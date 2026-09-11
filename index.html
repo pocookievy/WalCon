@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Wallet Chronicle" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="apple-touch-icon" href="./icons/icon-192.png" />
-  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./styles.css?v=3" />
   <title>Wallet Chronicle</title>
 </head>
 <body>
@@ -52,7 +52,7 @@
       </section>
 
       <section class="view" data-view="categories">
-        <div class="topbar"><div><div class="title">Categories</div><div class="subtle">Nothing is preloaded — create your own structure</div></div><button class="iconbtn" data-open="category">＋</button></div>
+        <div class="topbar"><div><div class="title">Categories</div><div class="subtle">General defaults are editable; custom categories can be added anytime</div></div><button class="iconbtn" data-open="category">＋</button></div>
         <div id="categoryList"></div>
       </section>
 
@@ -83,7 +83,6 @@
           <div class="item"><div class="grow"><div class="name">Signed in as</div><div class="meta" id="settingsEmail">—</div></div></div>
           <div class="item"><div class="grow"><div class="name">Budget alert threshold</div><div class="meta">Yellow at 85%; red at 100%+</div></div></div>
           <div class="item"><div class="grow"><div class="name">Data storage</div><div class="meta">Cloud Firestore under your authenticated UID</div></div></div>
-          <div class="item"><div class="grow"><div class="name">PWA cache</div><div class="meta">Static UI only; Firebase requests are never service-worker cached</div></div></div>
         </div>
       </section>
     </div>
@@ -100,9 +99,10 @@
     <div id="toast" class="toast">Saved</div>
   </main>
 </div>
-<script type="module" src="./app.js?v=2"></script>
+<script type="module" src="./app.js?v=3"></script>
+<script type="module" src="./enhancements.js?v=1"></script>
 <script>
-if ('serviceWorker' in navigator) addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=2', { updateViaCache: 'none' }).then(r=>r.update()).catch(console.error));
+if ('serviceWorker' in navigator) addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=3', { updateViaCache: 'none' }).then(r=>r.update()).catch(console.error));
 </script>
 </body>
 </html>
