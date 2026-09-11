@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="WalCon" />
-  <link rel="manifest" href="./manifest.webmanifest?v=6" />
+  <link rel="manifest" href="./manifest.webmanifest?v=7" />
   <link rel="apple-touch-icon" href="./icons/icon-192.png" />
-  <link rel="stylesheet" href="./styles-v5.css?v=6" />
+  <link rel="stylesheet" href="./styles-v5.css?v=7" />
   <title>WalCon</title>
 </head>
 <body>
@@ -36,12 +36,6 @@
     <div id="modal" class="modal hidden"><div class="sheet"><div class="sheet-head"><h3 id="modalTitle">Edit</h3><button id="modalClose" class="close">×</button></div><div id="modalBody"></div></div></div><div id="toast" class="toast"></div>
   </main>
 </div>
-<script>
-  if (!localStorage.getItem('walcon.googleDriveClientId')) {
-    localStorage.setItem('walcon.googleDriveClientId','885206375100-hk3emkfh3afbh7hiad3flqpg9ss0qohn.apps.googleusercontent.com');
-  }
-</script>
-<script type="module" src="./app-v6.js?v=6"></script>
-<script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=6',{updateViaCache:'none'}).then(r=>r.update()).catch(console.error));}</script>
+<script type="module" src="./boot-v7.js?v=7"></script>
 </body>
 </html>
