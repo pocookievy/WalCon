@@ -1,0 +1,21 @@
+name: Live WalCon Smoke Test
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - name: Wait briefly for GitHub Pages deployment
+        run: sleep 20
+      - name: Run live smoke test
+        run: node tests/live-smoke.mjs
