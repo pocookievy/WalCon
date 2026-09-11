@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="WalCon" />
-  <link rel="manifest" href="./manifest.webmanifest?v=7" />
+  <link rel="manifest" href="./manifest.webmanifest?v=11" />
   <link rel="apple-touch-icon" href="./icons/icon-192.png" />
-  <link rel="stylesheet" href="./styles-v5.css?v=7" />
+  <link rel="stylesheet" href="./styles-v5.css?v=11" />
   <title>WalCon</title>
 </head>
 <body>
@@ -20,7 +20,7 @@
     <span id="homeSourceCount" class="hidden">0</span>
     <div class="app" id="app">
       <section class="view active" data-view="loading"><div class="loader"></div></section>
-      <section class="view" data-view="auth"><div class="auth-wrap"><div class="logo">W</div><h1>WalCon</h1><p>Track balances, income, expenses, budgets, bills and debts with Firebase-backed data.</p><div class="card auth-card"><label>Email<input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="Minimum 6 characters"></label><div class="grid2"><button id="loginBtn" class="btn primary">Log In</button><button id="signupBtn" class="btn">Create Account</button></div><div id="authMessage" class="helper"></div></div></div></section>
+      <section class="view" data-view="auth"><div class="auth-wrap"><div class="logo">W</div><h1>WalCon</h1><p>Track balances, income, expenses, budgets, bills and debts with Firebase-backed data.</p><div class="card auth-card"><label>Email<input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="Minimum 6 characters"></label><div class="grid2"><button id="loginBtn" type="button" class="btn primary">Log In</button><button id="signupBtn" type="button" class="btn">Create Account</button></div><button id="forgotPasswordBtn" type="button" class="link" style="margin-top:10px">Forgot Password</button><div id="authMessage" class="helper"></div></div></div></section>
       <section class="view" data-view="home"><div class="topbar"><div><div class="eyebrow" id="homeMonthLabel">Current month</div><h2>Home</h2></div><button id="logoutBtn" class="round">↪</button></div><div class="card hero-card"><div class="eyebrow">Total available balance</div><div class="hero-number" id="homeBalance">Rp 0,00</div><div class="summary3"><div><span>Budget left</span><strong id="homeBudgetLeft">Rp 0,00</strong></div><div><span>Spent</span><strong id="homeSpent">Rp 0,00</strong></div><div><span>Income</span><strong id="homeIncome">Rp 0,00</strong></div></div></div><div class="section-title"><strong>Balance sources</strong><button class="link" data-view-go="balances">Manage</button></div><div id="homeBalances" class="hscroll"></div><div class="section-title"><strong>Expense summary by category</strong><span class="muted" id="graphTotal"></span></div><div class="card graph-card"><div class="donut-wrap"><div id="expenseDonut" class="donut"><div><strong id="donutAmount">Rp 0</strong><span>This month</span></div></div></div><div id="expenseLegend" class="legend"></div></div><div class="grid2" style="margin-top:12px"><button class="btn primary" data-open-transaction="expense">Add Expense</button><button class="btn" data-open-transaction="income">Add Income</button></div><div class="section-title"><strong>Recent transactions</strong><button class="link" data-view-go="history">History</button></div><div id="recentExpenses" class="card list"></div></section>
       <section class="view" data-view="balances"><div class="topbar"><div><div class="eyebrow">Source of funds</div><h2>Balances</h2></div><button class="round" data-open="balance">＋</button></div><div class="card"><div class="eyebrow">Total balance</div><div class="hero-number small" id="balanceTotal">Rp 0,00</div></div><div id="balanceList" class="stack"></div></section>
       <section class="view" data-view="categories"><div class="topbar"><div><div class="eyebrow">Editable structure</div><h2>Categories & line items</h2></div><button class="round" data-open="category">＋</button></div><div class="filter-row" id="categoryFilters"><button class="chip active" data-filter="all">All</button><button class="chip" data-filter="income">Income</button><button class="chip" data-filter="need">Needs</button><button class="chip" data-filter="want">Wants</button><button class="chip" data-filter="debt">Debt</button></div><div id="categoryList" class="stack"></div></section>
@@ -36,6 +36,6 @@
     <div id="modal" class="modal hidden"><div class="sheet"><div class="sheet-head"><h3 id="modalTitle">Edit</h3><button id="modalClose" class="close">×</button></div><div id="modalBody"></div></div></div><div id="toast" class="toast"></div>
   </main>
 </div>
-<script type="module" src="./boot-v7.js?v=7"></script>
+<script type="module" src="./boot-v7.js?v=11"></script>
 </body>
 </html>
