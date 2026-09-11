@@ -34,17 +34,17 @@ jobs:
           PY
       - name: Bundle application
         run: npx esbuild app-build.js --bundle --format=esm --platform=browser --outfile=app-bundle.js
-      - name: Bundle default template migration
-        run: npx esbuild template-defaults-src.js --bundle --format=esm --platform=browser --outfile=template-defaults-bundle.js
+      - name: Bundle authentication hotfix
+        run: npx esbuild auth-hotfix-v11-src.js --bundle --format=esm --platform=browser --outfile=auth-hotfix-v11-bundle.js
       - name: Validate bundles
         run: |
           node --check app-bundle.js
-          node --check template-defaults-bundle.js
+          node --check auth-hotfix-v11-bundle.js
       - name: Commit bundles
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app-bundle.js template-defaults-bundle.js
+          git add app-bundle.js auth-hotfix-v11-bundle.js
           if git diff --cached --quiet; then
             echo "No bundle changes"
           else
