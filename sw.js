@@ -1,9 +1,9 @@
-const CACHE = 'walcon-v5';
+const CACHE = 'walcon-v6';
 const STATIC_ASSETS = [
   './',
   './index.html',
   './styles-v5.css',
-  './app-v5.js',
+  './app-v6.js',
   './firebase-config.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
@@ -21,7 +21,7 @@ self.addEventListener('fetch', event => {
   if(event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
   if(url.origin !== self.location.origin) return;
-  const networkFirst = event.request.mode === 'navigate' || /\/(app-v5\.js|styles-v5\.css|firebase-config\.js|manifest\.webmanifest)$/.test(url.pathname);
+  const networkFirst = event.request.mode === 'navigate' || /\/(app-v6\.js|styles-v5\.css|firebase-config\.js|manifest\.webmanifest)$/.test(url.pathname);
   if(networkFirst){
     event.respondWith(fetch(event.request,{cache:'no-store'}).then(response=>{
       if(response.ok){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy));}
