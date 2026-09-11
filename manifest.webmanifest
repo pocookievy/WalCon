@@ -1,0 +1,14 @@
+{
+  "name": "Wallet Chronicle",
+  "short_name": "Wallet",
+  "description": "Personal finance PWA for monthly budgeting, expenses, bills, debts and history.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1D084B",
+  "theme_color": "#1D084B",
+  "icons": [
+    {"src":"./icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"./icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  ]
+}
