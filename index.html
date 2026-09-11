@@ -100,9 +100,9 @@
     <div id="toast" class="toast">Saved</div>
   </main>
 </div>
-<script type="module" src="./app.js"></script>
+<script type="module" src="./app.js?v=2"></script>
 <script>
-if ('serviceWorker' in navigator) addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(console.error));
+if ('serviceWorker' in navigator) addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=2', { updateViaCache: 'none' }).then(r=>r.update()).catch(console.error));
 </script>
 </body>
 </html>
