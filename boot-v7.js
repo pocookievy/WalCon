@@ -46,22 +46,19 @@ async function bootWalCon() {
       );
     }
 
-    // Unregistering a service worker does not release the current page immediately.
-    // If this page was controlled by an older WalCon worker, reload once so the next
-    // request for app-v6.js goes directly to GitHub Pages instead of an old cache.
-    if (hadController && sessionStorage.getItem('walcon-sw-reload-v8') !== 'done') {
-      sessionStorage.setItem('walcon-sw-reload-v8', 'done');
+    if (hadController && sessionStorage.getItem('walcon-sw-reload-v9') !== 'done') {
+      sessionStorage.setItem('walcon-sw-reload-v9', 'done');
       location.reload();
       return;
     }
 
     const timeout = setTimeout(() => {
       if (!window.__WALCON_APP_LOADED__) {
-        showBootError('WalCon application code did not finish loading. Reload once. If this message remains, check the error shown here.');
+        showBootError('WalCon application code did not finish loading. The bundled app could not initialize within 15 seconds.');
       }
-    }, 10000);
+    }, 15000);
 
-    await import(`./app-v6.js?v=8&t=${Date.now()}`);
+    await import(`./app-bundle.js?v=9&t=${Date.now()}`);
     window.__WALCON_APP_LOADED__ = true;
     clearTimeout(timeout);
   } catch (error) {
