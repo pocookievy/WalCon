@@ -33,31 +33,26 @@ if (authView) authView.classList.add('active');
 async function bootWalCon() {
   try {
     const hadController = Boolean(navigator.serviceWorker?.controller);
-
     if ('serviceWorker' in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();
       await Promise.all(registrations.map(reg => reg.unregister()));
     }
-
     if ('caches' in window) {
       const keys = await caches.keys();
       await Promise.all(keys.filter(key => key.startsWith('walcon-')).map(key => caches.delete(key)));
     }
-
-    if (hadController && sessionStorage.getItem('walcon-sw-reload-v11') !== 'done') {
-      sessionStorage.setItem('walcon-sw-reload-v11', 'done');
+    if (hadController && sessionStorage.getItem('walcon-sw-reload-v12') !== 'done') {
+      sessionStorage.setItem('walcon-sw-reload-v12', 'done');
       location.reload();
       return;
     }
 
     const timeout = setTimeout(() => {
-      if (!window.__WALCON_APP_LOADED__) {
-        showBootError('WalCon application code did not finish loading within 15 seconds.');
-      }
+      if (!window.__WALCON_APP_LOADED__) showBootError('WalCon application code did not finish loading within 15 seconds.');
     }, 15000);
 
-    await import(`./app-bundle.js?v=11&t=${Date.now()}`);
-    await import(`./auth-hotfix-v11-bundle.js?v=11&t=${Date.now()}`);
+    await import(`./app-bundle.js?v=12&t=${Date.now()}`);
+    await import(`./auth-v12-bundle.js?v=12&t=${Date.now()}`);
     window.__WALCON_APP_LOADED__ = true;
     clearTimeout(timeout);
   } catch (error) {
