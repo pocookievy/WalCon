@@ -402,7 +402,7 @@ function updateEmulatorBanner(name4, isRunningEmulator) {
   }
   const bannerId = "__firebase__banner";
   const summary = getEmulatorSummary();
-  const showError2 = summary.prod.length > 0;
+  const showError = summary.prod.length > 0;
   function tearDown() {
     const element = document.getElementById(bannerId);
     if (element) {
@@ -464,7 +464,7 @@ function updateEmulatorBanner(name4, isRunningEmulator) {
       bannerEl.append(prependIcon, firebaseText, learnMoreLink, closeBtn);
       document.body.appendChild(bannerEl);
     }
-    if (showError2) {
+    if (showError) {
       firebaseText.innerText = `Preview backend disconnected.`;
       prependIcon.innerHTML = `<g clip-path="url(#clip0_6013_33858)">
 <path d="M4.8 17.6L12 5.6L19.2 17.6H4.8ZM6.91667 16.4H17.0833L12 7.93333L6.91667 16.4ZM12 15.6C12.1667 15.6 12.3056 15.5444 12.4167 15.4333C12.5389 15.3111 12.6 15.1667 12.6 15C12.6 14.8333 12.5389 14.6944 12.4167 14.5833C12.3056 14.4611 12.1667 14.4 12 14.4C11.8333 14.4 11.6889 14.4611 11.5667 14.5833C11.4556 14.6944 11.4 14.8333 11.4 15C11.4 15.1667 11.4556 15.3111 11.5667 15.4333C11.6889 15.5444 11.8333 15.6 12 15.6ZM11.4 13.6H12.6V10.4H11.4V13.6Z" fill="#212121"/>
@@ -2057,14 +2057,14 @@ function _prodErrorMap() {
 var prodErrorMap = _prodErrorMap;
 var _DEFAULT_AUTH_ERROR_FACTORY = new ErrorFactory("auth", "Firebase", _prodErrorMap());
 var logClient = new Logger("@firebase/auth");
-function _logWarn(msg, ...args) {
+function _logWarn(msg2, ...args) {
   if (logClient.logLevel <= LogLevel.WARN) {
-    logClient.warn(`Auth (${SDK_VERSION}): ${msg}`, ...args);
+    logClient.warn(`Auth (${SDK_VERSION}): ${msg2}`, ...args);
   }
 }
-function _logError(msg, ...args) {
+function _logError(msg2, ...args) {
   if (logClient.logLevel <= LogLevel.ERROR) {
-    logClient.error(`Auth (${SDK_VERSION}): ${msg}`, ...args);
+    logClient.error(`Auth (${SDK_VERSION}): ${msg2}`, ...args);
   }
 }
 function _fail(authOrCode, ...rest) {
@@ -2470,7 +2470,7 @@ async function _performApiRequest(auth2, method, path, request, customErrorMap =
         };
       }
     }
-    const query2 = querystring(Object.assign({ key: auth2.config.apiKey }, params)).slice(1);
+    const query = querystring(Object.assign({ key: auth2.config.apiKey }, params)).slice(1);
     const headers = await auth2._getAdditionalHeaders();
     headers[
       "Content-Type"
@@ -2492,7 +2492,7 @@ async function _performApiRequest(auth2, method, path, request, customErrorMap =
     if (auth2.emulatorConfig && isCloudWorkstation(auth2.emulatorConfig.host)) {
       fetchArgs.credentials = "include";
     }
-    return FetchProvider.fetch()(await _getFinalTarget(auth2, auth2.config.apiHost, path, query2), fetchArgs);
+    return FetchProvider.fetch()(await _getFinalTarget(auth2, auth2.config.apiHost, path, query), fetchArgs);
   });
 }
 async function _performFetchWithErrorHandling(auth2, customErrorMap, fetchFn) {
@@ -2544,8 +2544,8 @@ async function _performSignInRequest(auth2, method, path, request, customErrorMa
   }
   return serverResponse;
 }
-async function _getFinalTarget(auth2, host, path, query2) {
-  const base = `${host}${path}?${query2}`;
+async function _getFinalTarget(auth2, host, path, query) {
+  const base = `${host}${path}?${query}`;
   const authInternal = auth2;
   const finalTarget = authInternal.config.emulator ? _emulatorUrl(auth2.config, base) : `${auth2.config.apiScheme}://${base}`;
   if (CookieAuthProxiedEndpoints.includes(path)) {
@@ -4699,6 +4699,12 @@ async function linkEmailPassword(auth2, request) {
 async function signInWithPassword(auth2, request) {
   return _performSignInRequest(auth2, "POST", "/v1/accounts:signInWithPassword", _addTidIfNecessary(auth2, request));
 }
+async function sendOobCode(auth2, request) {
+  return _performApiRequest(auth2, "POST", "/v1/accounts:sendOobCode", _addTidIfNecessary(auth2, request));
+}
+async function sendPasswordResetEmail$1(auth2, request) {
+  return sendOobCode(auth2, request);
+}
 async function signInWithEmailLink$1(auth2, request) {
   return _performSignInRequest(auth2, "POST", "/v1/accounts:signInWithEmailLink", _addTidIfNecessary(auth2, request));
 }
@@ -5609,11 +5615,76 @@ async function _signInWithCredential(auth2, credential, bypassAuthState = false)
 async function signInWithCredential(auth2, credential) {
   return _signInWithCredential(_castAuth(auth2), credential);
 }
+function _setActionCodeSettingsOnRequest(auth2, request, actionCodeSettings) {
+  var _a;
+  _assert(
+    ((_a = actionCodeSettings.url) === null || _a === void 0 ? void 0 : _a.length) > 0,
+    auth2,
+    "invalid-continue-uri"
+    /* AuthErrorCode.INVALID_CONTINUE_URI */
+  );
+  _assert(
+    typeof actionCodeSettings.dynamicLinkDomain === "undefined" || actionCodeSettings.dynamicLinkDomain.length > 0,
+    auth2,
+    "invalid-dynamic-link-domain"
+    /* AuthErrorCode.INVALID_DYNAMIC_LINK_DOMAIN */
+  );
+  _assert(
+    typeof actionCodeSettings.linkDomain === "undefined" || actionCodeSettings.linkDomain.length > 0,
+    auth2,
+    "invalid-hosting-link-domain"
+    /* AuthErrorCode.INVALID_HOSTING_LINK_DOMAIN */
+  );
+  request.continueUrl = actionCodeSettings.url;
+  request.dynamicLinkDomain = actionCodeSettings.dynamicLinkDomain;
+  request.linkDomain = actionCodeSettings.linkDomain;
+  request.canHandleCodeInApp = actionCodeSettings.handleCodeInApp;
+  if (actionCodeSettings.iOS) {
+    _assert(
+      actionCodeSettings.iOS.bundleId.length > 0,
+      auth2,
+      "missing-ios-bundle-id"
+      /* AuthErrorCode.MISSING_IOS_BUNDLE_ID */
+    );
+    request.iOSBundleId = actionCodeSettings.iOS.bundleId;
+  }
+  if (actionCodeSettings.android) {
+    _assert(
+      actionCodeSettings.android.packageName.length > 0,
+      auth2,
+      "missing-android-pkg-name"
+      /* AuthErrorCode.MISSING_ANDROID_PACKAGE_NAME */
+    );
+    request.androidInstallApp = actionCodeSettings.android.installApp;
+    request.androidMinimumVersionCode = actionCodeSettings.android.minimumVersion;
+    request.androidPackageName = actionCodeSettings.android.packageName;
+  }
+}
 async function recachePasswordPolicy(auth2) {
   const authInternal = _castAuth(auth2);
   if (authInternal._getPasswordPolicyInternal()) {
     await authInternal._updatePasswordPolicy();
   }
+}
+async function sendPasswordResetEmail(auth2, email, actionCodeSettings) {
+  const authInternal = _castAuth(auth2);
+  const request = {
+    requestType: "PASSWORD_RESET",
+    email,
+    clientType: "CLIENT_TYPE_WEB"
+    /* RecaptchaClientType.WEB */
+  };
+  if (actionCodeSettings) {
+    _setActionCodeSettingsOnRequest(authInternal, request, actionCodeSettings);
+  }
+  await handleRecaptchaFlow(
+    authInternal,
+    request,
+    "getOobCode",
+    sendPasswordResetEmail$1,
+    "EMAIL_PASSWORD_PROVIDER"
+    /* RecaptchaAuthProvider.EMAIL_PASSWORD_PROVIDER */
+  );
 }
 async function createUserWithEmailAndPassword(auth2, email, password) {
   if (_isFirebaseServerApp(auth2.app)) {
@@ -5656,6 +5727,9 @@ function signInWithEmailAndPassword(auth2, email, password) {
     throw error;
   });
 }
+function setPersistence(auth2, persistence) {
+  return getModularInstance(auth2).setPersistence(persistence);
+}
 function onIdTokenChanged(auth2, nextOrObserver, error, completed) {
   return getModularInstance(auth2).onIdTokenChanged(nextOrObserver, error, completed);
 }
@@ -5664,9 +5738,6 @@ function beforeAuthStateChanged(auth2, callback, onAbort) {
 }
 function onAuthStateChanged(auth2, nextOrObserver, error, completed) {
   return getModularInstance(auth2).onAuthStateChanged(nextOrObserver, error, completed);
-}
-function signOut(auth2) {
-  return getModularInstance(auth2).signOut();
 }
 function startEnrollPhoneMfa(auth2, request) {
   return _performApiRequest(auth2, "POST", "/v2/accounts/mfaEnrollment:start", _addTidIfNecessary(auth2, request));
@@ -12597,11 +12668,6 @@ function __PRIVATE_estimateByteSize(e) {
       });
   }
 }
-function __PRIVATE_refValue(e, t) {
-  return {
-    referenceValue: `projects/${e.projectId}/databases/${e.database}/documents/${t.path.canonicalString()}`
-  };
-}
 function isInteger(e) {
   return !!e && "integerValue" in e;
 }
@@ -13217,10 +13283,6 @@ function __PRIVATE__queryToTarget(e, t) {
     const n = e.endAt ? new Bound(e.endAt.position, e.endAt.inclusive) : null, r = e.startAt ? new Bound(e.startAt.position, e.startAt.inclusive) : null;
     return __PRIVATE_newTarget(e.path, e.collectionGroup, t, e.filters, e.limit, n, r);
   }
-}
-function __PRIVATE_queryWithAddedFilter(e, t) {
-  const n = e.filters.concat([t]);
-  return new __PRIVATE_QueryImpl(e.path, e.collectionGroup, e.explicitOrderBy.slice(), n, e.limit, e.limitType, e.startAt, e.endAt);
 }
 function __PRIVATE_queryWithLimit(e, t, n) {
   return new __PRIVATE_QueryImpl(e.path, e.collectionGroup, e.explicitOrderBy.slice(), e.filters.slice(), t, n, e.startAt, e.endAt);
@@ -14454,23 +14516,6 @@ function __PRIVATE_toMutationDocument(e, t, n) {
     name: __PRIVATE_toName(e, t),
     fields: n.value.mapValue.fields
   };
-}
-function __PRIVATE_fromBatchGetDocumentsResponse(e, t) {
-  return "found" in t ? (function __PRIVATE_fromFound(e2, t2) {
-    __PRIVATE_hardAssert(!!t2.found, 43571), t2.found.name, t2.found.updateTime;
-    const n = fromName(e2, t2.found.name), r = __PRIVATE_fromVersion(t2.found.updateTime), i = t2.found.createTime ? __PRIVATE_fromVersion(t2.found.createTime) : SnapshotVersion.min(), s = new ObjectValue({
-      mapValue: {
-        fields: t2.found.fields
-      }
-    });
-    return MutableDocument.newFoundDocument(n, r, i, s);
-  })(e, t) : "missing" in t ? (function __PRIVATE_fromMissing(e2, t2) {
-    __PRIVATE_hardAssert(!!t2.missing, 3894), __PRIVATE_hardAssert(!!t2.readTime, 22933);
-    const n = fromName(e2, t2.missing), r = __PRIVATE_fromVersion(t2.readTime);
-    return MutableDocument.newNoDocument(n, r);
-  })(e, t) : fail(7234, {
-    result: t
-  });
 }
 function __PRIVATE_fromWatchChange(e, t) {
   let n;
@@ -18800,158 +18845,6 @@ var __PRIVATE_AsyncObserver = class {
     }), 0);
   }
 };
-var Transaction$2 = class {
-  constructor(e) {
-    this.datastore = e, // The version of each document that was read during this transaction.
-    this.readVersions = /* @__PURE__ */ new Map(), this.mutations = [], this.committed = false, /**
-     * A deferred usage error that occurred previously in this transaction that
-     * will cause the transaction to fail once it actually commits.
-     */
-    this.lastTransactionError = null, /**
-     * Set of documents that have been written in the transaction.
-     *
-     * When there's more than one write to the same key in a transaction, any
-     * writes after the first are handled differently.
-     */
-    this.writtenDocs = /* @__PURE__ */ new Set();
-  }
-  async lookup(e) {
-    if (this.ensureCommitNotCalled(), this.mutations.length > 0) throw this.lastTransactionError = new FirestoreError(N.INVALID_ARGUMENT, "Firestore transactions require all reads to be executed before all writes."), this.lastTransactionError;
-    const t = await (async function __PRIVATE_invokeBatchGetDocumentsRpc(e2, t2) {
-      const n = __PRIVATE_debugCast(e2), r = {
-        documents: t2.map(((e3) => __PRIVATE_toName(n.serializer, e3)))
-      }, i = await n.Jo("BatchGetDocuments", n.serializer.databaseId, ResourcePath.emptyPath(), r, t2.length), s = /* @__PURE__ */ new Map();
-      i.forEach(((e3) => {
-        const t3 = __PRIVATE_fromBatchGetDocumentsResponse(n.serializer, e3);
-        s.set(t3.key.toString(), t3);
-      }));
-      const o = [];
-      return t2.forEach(((e3) => {
-        const t3 = s.get(e3.toString());
-        __PRIVATE_hardAssert(!!t3, 55234, {
-          key: e3
-        }), o.push(t3);
-      })), o;
-    })(this.datastore, e);
-    return t.forEach(((e2) => this.recordVersion(e2))), t;
-  }
-  set(e, t) {
-    this.write(t.toMutation(e, this.precondition(e))), this.writtenDocs.add(e.toString());
-  }
-  update(e, t) {
-    try {
-      this.write(t.toMutation(e, this.preconditionForUpdate(e)));
-    } catch (e2) {
-      this.lastTransactionError = e2;
-    }
-    this.writtenDocs.add(e.toString());
-  }
-  delete(e) {
-    this.write(new __PRIVATE_DeleteMutation(e, this.precondition(e))), this.writtenDocs.add(e.toString());
-  }
-  async commit() {
-    if (this.ensureCommitNotCalled(), this.lastTransactionError) throw this.lastTransactionError;
-    const e = this.readVersions;
-    this.mutations.forEach(((t) => {
-      e.delete(t.key.toString());
-    })), // For each document that was read but not written to, we want to perform
-    // a `verify` operation.
-    e.forEach(((e2, t) => {
-      const n = DocumentKey.fromPath(t);
-      this.mutations.push(new __PRIVATE_VerifyMutation(n, this.precondition(n)));
-    })), await (async function __PRIVATE_invokeCommitRpc(e2, t) {
-      const n = __PRIVATE_debugCast(e2), r = {
-        writes: t.map(((e3) => toMutation(n.serializer, e3)))
-      };
-      await n.Wo("Commit", n.serializer.databaseId, ResourcePath.emptyPath(), r);
-    })(this.datastore, this.mutations), this.committed = true;
-  }
-  recordVersion(e) {
-    let t;
-    if (e.isFoundDocument()) t = e.version;
-    else {
-      if (!e.isNoDocument()) throw fail(50498, {
-        Wu: e.constructor.name
-      });
-      t = SnapshotVersion.min();
-    }
-    const n = this.readVersions.get(e.key.toString());
-    if (n) {
-      if (!t.isEqual(n))
-        throw new FirestoreError(N.ABORTED, "Document version changed between two reads.");
-    } else this.readVersions.set(e.key.toString(), t);
-  }
-  /**
-   * Returns the version of this document when it was read in this transaction,
-   * as a precondition, or no precondition if it was not read.
-   */
-  precondition(e) {
-    const t = this.readVersions.get(e.toString());
-    return !this.writtenDocs.has(e.toString()) && t ? t.isEqual(SnapshotVersion.min()) ? Precondition.exists(false) : Precondition.updateTime(t) : Precondition.none();
-  }
-  /**
-   * Returns the precondition for a document if the operation is an update.
-   */
-  preconditionForUpdate(e) {
-    const t = this.readVersions.get(e.toString());
-    if (!this.writtenDocs.has(e.toString()) && t) {
-      if (t.isEqual(SnapshotVersion.min()))
-        throw new FirestoreError(N.INVALID_ARGUMENT, "Can't update a document that doesn't exist.");
-      return Precondition.updateTime(t);
-    }
-    return Precondition.exists(true);
-  }
-  write(e) {
-    this.ensureCommitNotCalled(), this.mutations.push(e);
-  }
-  ensureCommitNotCalled() {
-  }
-};
-var __PRIVATE_TransactionRunner = class {
-  constructor(e, t, n, r, i) {
-    this.asyncQueue = e, this.datastore = t, this.options = n, this.updateFunction = r, this.deferred = i, this.Gu = n.maxAttempts, this.F_ = new __PRIVATE_ExponentialBackoff(
-      this.asyncQueue,
-      "transaction_retry"
-      /* TimerId.TransactionRetry */
-    );
-  }
-  /** Runs the transaction and sets the result on deferred. */
-  zu() {
-    this.Gu -= 1, this.ju();
-  }
-  ju() {
-    this.F_.g_((async () => {
-      const e = new Transaction$2(this.datastore), t = this.Ju(e);
-      t && t.then(((t2) => {
-        this.asyncQueue.enqueueAndForget((() => e.commit().then((() => {
-          this.deferred.resolve(t2);
-        })).catch(((e2) => {
-          this.Hu(e2);
-        }))));
-      })).catch(((e2) => {
-        this.Hu(e2);
-      }));
-    }));
-  }
-  Ju(e) {
-    try {
-      const t = this.updateFunction(e);
-      return !__PRIVATE_isNullOrUndefined(t) && t.catch && t.then ? t : (this.deferred.reject(Error("Transaction callback must return a Promise")), null);
-    } catch (e2) {
-      return this.deferred.reject(e2), null;
-    }
-  }
-  Hu(e) {
-    this.Gu > 0 && this.Yu(e) ? (this.Gu -= 1, this.asyncQueue.enqueueAndForget((() => (this.ju(), Promise.resolve())))) : this.deferred.reject(e);
-  }
-  Yu(e) {
-    if ("FirebaseError" === e.name) {
-      const t = e.code;
-      return "aborted" === t || "failed-precondition" === t || "already-exists" === t || !__PRIVATE_isPermanentError(t);
-    }
-    return false;
-  }
-};
 var rn = "FirestoreClient";
 var FirestoreClient = class {
   constructor(e, t, n, r, i) {
@@ -19039,9 +18932,6 @@ async function __PRIVATE_ensureOnlineComponents(e) {
 }
 function __PRIVATE_getSyncEngine(e) {
   return __PRIVATE_ensureOnlineComponents(e).then(((e2) => e2.syncEngine));
-}
-function __PRIVATE_getDatastore(e) {
-  return __PRIVATE_ensureOnlineComponents(e).then(((e2) => e2.datastore));
 }
 async function __PRIVATE_getEventManager(e) {
   const t = await __PRIVATE_ensureOnlineComponents(e), n = t.eventManager;
@@ -19488,14 +19378,6 @@ function __PRIVATE_getMessageOrStack(e) {
   let t = e.message || "";
   return e.stack && (t = e.stack.includes(e.message) ? e.stack : e.message + "\n" + e.stack), t;
 }
-function __PRIVATE_isPartialObserver(e) {
-  return (function __PRIVATE_implementsAnyMethods(e2, t) {
-    if ("object" != typeof e2 || null === e2) return false;
-    const n = e2;
-    for (const e3 of t) if (e3 in n && "function" == typeof n[e3]) return true;
-    return false;
-  })(e, ["next", "error", "complete"]);
-}
 var Firestore = class extends Firestore$1 {
   /** @hideconstructor */
   constructor(e, t, n, r) {
@@ -19935,12 +19817,37 @@ var __PRIVATE_DeleteFieldValueImpl = class ___PRIVATE_DeleteFieldValueImpl exten
     return e instanceof ___PRIVATE_DeleteFieldValueImpl;
   }
 };
+function __PRIVATE_createSentinelChildContext(e, t, n) {
+  return new __PRIVATE_ParseContextImpl({
+    Ec: 3,
+    bc: t.settings.bc,
+    methodName: e._methodName,
+    mc: n
+  }, t.databaseId, t.serializer, t.ignoreUndefinedProperties);
+}
 var __PRIVATE_ServerTimestampFieldValueImpl = class ___PRIVATE_ServerTimestampFieldValueImpl extends FieldValue {
   _toFieldTransform(e) {
     return new FieldTransform(e.path, new __PRIVATE_ServerTimestampTransform());
   }
   isEqual(e) {
     return e instanceof ___PRIVATE_ServerTimestampFieldValueImpl;
+  }
+};
+var __PRIVATE_ArrayUnionFieldValueImpl = class ___PRIVATE_ArrayUnionFieldValueImpl extends FieldValue {
+  constructor(e, t) {
+    super(e), this.vc = t;
+  }
+  _toFieldTransform(e) {
+    const t = __PRIVATE_createSentinelChildContext(
+      this,
+      e,
+      /*array=*/
+      true
+    ), n = this.vc.map(((e2) => __PRIVATE_parseData(e2, t))), r = new __PRIVATE_ArrayUnionTransformOperation(n);
+    return new FieldTransform(e.path, r);
+  }
+  isEqual(e) {
+    return e instanceof ___PRIVATE_ArrayUnionFieldValueImpl && deepEqual(this.vc, e.vc);
   }
 };
 function __PRIVATE_parseUpdateData(e, t, n, r) {
@@ -19980,9 +19887,6 @@ function __PRIVATE_parseUpdateVarargs(e, t, n, r, i, s) {
   }
   const l = new FieldMask(u);
   return new ParsedUpdateData(c, l, o.fieldTransforms);
-}
-function __PRIVATE_parseQueryValue(e, t, n, r = false) {
-  return __PRIVATE_parseData(n, e.Dc(r ? 4 : 3, t));
 }
 function __PRIVATE_parseData(e, t) {
   if (__PRIVATE_looksLikeJsonObject(
@@ -20247,142 +20151,6 @@ function __PRIVATE_fieldPathFromArgument(e, t) {
 function __PRIVATE_validateHasExplicitOrderByForLimitToLast(e) {
   if ("L" === e.limitType && 0 === e.explicitOrderBy.length) throw new FirestoreError(N.UNIMPLEMENTED, "limitToLast() queries require specifying at least one orderBy() clause");
 }
-var AppliableConstraint = class {
-};
-var QueryConstraint = class extends AppliableConstraint {
-};
-function query(e, t, ...n) {
-  let r = [];
-  t instanceof AppliableConstraint && r.push(t), r = r.concat(n), (function __PRIVATE_validateQueryConstraintArray(e2) {
-    const t2 = e2.filter(((e3) => e3 instanceof QueryCompositeFilterConstraint)).length, n2 = e2.filter(((e3) => e3 instanceof QueryFieldFilterConstraint)).length;
-    if (t2 > 1 || t2 > 0 && n2 > 0) throw new FirestoreError(N.INVALID_ARGUMENT, "InvalidQuery. When using composite filters, you cannot use more than one filter at the top level. Consider nesting the multiple filters within an `and(...)` statement. For example: change `query(query, where(...), or(...))` to `query(query, and(where(...), or(...)))`.");
-  })(r);
-  for (const t2 of r) e = t2._apply(e);
-  return e;
-}
-var QueryFieldFilterConstraint = class _QueryFieldFilterConstraint extends QueryConstraint {
-  /**
-   * @internal
-   */
-  constructor(e, t, n) {
-    super(), this._field = e, this._op = t, this._value = n, /** The type of this query constraint */
-    this.type = "where";
-  }
-  static _create(e, t, n) {
-    return new _QueryFieldFilterConstraint(e, t, n);
-  }
-  _apply(e) {
-    const t = this._parse(e);
-    return __PRIVATE_validateNewFieldFilter(e._query, t), new Query(e.firestore, e.converter, __PRIVATE_queryWithAddedFilter(e._query, t));
-  }
-  _parse(e) {
-    const t = __PRIVATE_newUserDataReader(e.firestore), n = (function __PRIVATE_newQueryFilter(e2, t2, n2, r, i, s, o) {
-      let _;
-      if (i.isKeyField()) {
-        if ("array-contains" === s || "array-contains-any" === s) throw new FirestoreError(N.INVALID_ARGUMENT, `Invalid Query. You can't perform '${s}' queries on documentId().`);
-        if ("in" === s || "not-in" === s) {
-          __PRIVATE_validateDisjunctiveFilterElements(o, s);
-          const t3 = [];
-          for (const n3 of o) t3.push(__PRIVATE_parseDocumentIdValue(r, e2, n3));
-          _ = {
-            arrayValue: {
-              values: t3
-            }
-          };
-        } else _ = __PRIVATE_parseDocumentIdValue(r, e2, o);
-      } else "in" !== s && "not-in" !== s && "array-contains-any" !== s || __PRIVATE_validateDisjunctiveFilterElements(o, s), _ = __PRIVATE_parseQueryValue(
-        n2,
-        t2,
-        o,
-        /* allowArrays= */
-        "in" === s || "not-in" === s
-      );
-      const a = FieldFilter.create(i, s, _);
-      return a;
-    })(e._query, "where", t, e.firestore._databaseId, this._field, this._op, this._value);
-    return n;
-  }
-};
-function where(e, t, n) {
-  const r = t, i = __PRIVATE_fieldPathFromArgument("where", e);
-  return QueryFieldFilterConstraint._create(i, r, n);
-}
-var QueryCompositeFilterConstraint = class _QueryCompositeFilterConstraint extends AppliableConstraint {
-  /**
-   * @internal
-   */
-  constructor(e, t) {
-    super(), this.type = e, this._queryConstraints = t;
-  }
-  static _create(e, t) {
-    return new _QueryCompositeFilterConstraint(e, t);
-  }
-  _parse(e) {
-    const t = this._queryConstraints.map(((t2) => t2._parse(e))).filter(((e2) => e2.getFilters().length > 0));
-    return 1 === t.length ? t[0] : CompositeFilter.create(t, this._getOperator());
-  }
-  _apply(e) {
-    const t = this._parse(e);
-    return 0 === t.getFilters().length ? e : ((function __PRIVATE_validateNewFilter(e2, t2) {
-      let n = e2;
-      const r = t2.getFlattenedFilters();
-      for (const e3 of r) __PRIVATE_validateNewFieldFilter(n, e3), n = __PRIVATE_queryWithAddedFilter(n, e3);
-    })(e._query, t), new Query(e.firestore, e.converter, __PRIVATE_queryWithAddedFilter(e._query, t)));
-  }
-  _getQueryConstraints() {
-    return this._queryConstraints;
-  }
-  _getOperator() {
-    return "and" === this.type ? "and" : "or";
-  }
-};
-function __PRIVATE_parseDocumentIdValue(e, t, n) {
-  if ("string" == typeof (n = getModularInstance(n))) {
-    if ("" === n) throw new FirestoreError(N.INVALID_ARGUMENT, "Invalid query. When querying with documentId(), you must provide a valid document ID, but it was an empty string.");
-    if (!__PRIVATE_isCollectionGroupQuery(t) && -1 !== n.indexOf("/")) throw new FirestoreError(N.INVALID_ARGUMENT, `Invalid query. When querying a collection by documentId(), you must provide a plain document ID, but '${n}' contains a '/' character.`);
-    const r = t.path.child(ResourcePath.fromString(n));
-    if (!DocumentKey.isDocumentKey(r)) throw new FirestoreError(N.INVALID_ARGUMENT, `Invalid query. When querying a collection group by documentId(), the value provided must result in a valid document path, but '${r}' is not because it has an odd number of segments (${r.length}).`);
-    return __PRIVATE_refValue(e, new DocumentKey(r));
-  }
-  if (n instanceof DocumentReference) return __PRIVATE_refValue(e, n._key);
-  throw new FirestoreError(N.INVALID_ARGUMENT, `Invalid query. When querying with documentId(), you must provide a valid string or a DocumentReference, but it was: ${__PRIVATE_valueDescription(n)}.`);
-}
-function __PRIVATE_validateDisjunctiveFilterElements(e, t) {
-  if (!Array.isArray(e) || 0 === e.length) throw new FirestoreError(N.INVALID_ARGUMENT, `Invalid Query. A non-empty array is required for '${t.toString()}' filters.`);
-}
-function __PRIVATE_validateNewFieldFilter(e, t) {
-  const n = (function __PRIVATE_findOpInsideFilters(e2, t2) {
-    for (const n2 of e2) for (const e3 of n2.getFlattenedFilters()) if (t2.indexOf(e3.op) >= 0) return e3.op;
-    return null;
-  })(e.filters, (function __PRIVATE_conflictingOps(e2) {
-    switch (e2) {
-      case "!=":
-        return [
-          "!=",
-          "not-in"
-          /* Operator.NOT_IN */
-        ];
-      case "array-contains-any":
-      case "in":
-        return [
-          "not-in"
-          /* Operator.NOT_IN */
-        ];
-      case "not-in":
-        return [
-          "array-contains-any",
-          "in",
-          "not-in",
-          "!="
-          /* Operator.NOT_EQUAL */
-        ];
-      default:
-        return [];
-    }
-  })(t.op));
-  if (null !== n)
-    throw n === t.op ? new FirestoreError(N.INVALID_ARGUMENT, `Invalid query. You cannot use more than one '${t.op.toString()}' filter.`) : new FirestoreError(N.INVALID_ARGUMENT, `Invalid query. You cannot use '${t.op.toString()}' filters with '${n.toString()}' filters.`);
-}
 var AbstractUserDataWriter = class {
   convertValue(e, t = "none") {
     switch (__PRIVATE_typeOrder(e)) {
@@ -20471,23 +20239,6 @@ function __PRIVATE_applyFirestoreDataConverter(e, t, n) {
   let r;
   return r = e ? n && (n.merge || n.mergeFields) ? e.toFirestore(t, n) : e.toFirestore(t) : t, r;
 }
-var __PRIVATE_LiteUserDataWriter = class extends AbstractUserDataWriter {
-  constructor(e) {
-    super(), this.firestore = e;
-  }
-  convertBytes(e) {
-    return new Bytes(e);
-  }
-  convertReference(e) {
-    const t = this.convertDocumentKey(e, this.firestore._databaseId);
-    return new DocumentReference(
-      this.firestore,
-      /* converter= */
-      null,
-      t
-    );
-  }
-};
 var SnapshotMetadata = class {
   /** @hideconstructor */
   constructor(e, t) {
@@ -20747,65 +20498,6 @@ function setDoc(e, t, n) {
   const r = __PRIVATE_cast(e.firestore, Firestore), i = __PRIVATE_applyFirestoreDataConverter(e.converter, t, n);
   return executeWrite(r, [__PRIVATE_parseSetData(__PRIVATE_newUserDataReader(r), "setDoc", e._key, i, null !== e.converter, n).toMutation(e._key, Precondition.none())]);
 }
-function updateDoc(e, t, n, ...r) {
-  e = __PRIVATE_cast(e, DocumentReference);
-  const i = __PRIVATE_cast(e.firestore, Firestore), s = __PRIVATE_newUserDataReader(i);
-  let o;
-  o = "string" == typeof // For Compat types, we have to "extract" the underlying types before
-  // performing validation.
-  (t = getModularInstance(t)) || t instanceof FieldPath ? __PRIVATE_parseUpdateVarargs(s, "updateDoc", e._key, t, n, r) : __PRIVATE_parseUpdateData(s, "updateDoc", e._key, t);
-  return executeWrite(i, [o.toMutation(e._key, Precondition.exists(true))]);
-}
-function deleteDoc(e) {
-  return executeWrite(__PRIVATE_cast(e.firestore, Firestore), [new __PRIVATE_DeleteMutation(e._key, Precondition.none())]);
-}
-function addDoc(e, t) {
-  const n = __PRIVATE_cast(e.firestore, Firestore), r = doc(e), i = __PRIVATE_applyFirestoreDataConverter(e.converter, t);
-  return executeWrite(n, [__PRIVATE_parseSetData(__PRIVATE_newUserDataReader(e.firestore), "addDoc", r._key, i, null !== e.converter, {}).toMutation(r._key, Precondition.exists(false))]).then((() => r));
-}
-function onSnapshot(e, ...t) {
-  var n, r, i;
-  e = getModularInstance(e);
-  let s = {
-    includeMetadataChanges: false,
-    source: "default"
-  }, o = 0;
-  "object" != typeof t[o] || __PRIVATE_isPartialObserver(t[o]) || (s = t[o++]);
-  const _ = {
-    includeMetadataChanges: s.includeMetadataChanges,
-    source: s.source
-  };
-  if (__PRIVATE_isPartialObserver(t[o])) {
-    const e2 = t[o];
-    t[o] = null === (n = e2.next) || void 0 === n ? void 0 : n.bind(e2), t[o + 1] = null === (r = e2.error) || void 0 === r ? void 0 : r.bind(e2), t[o + 2] = null === (i = e2.complete) || void 0 === i ? void 0 : i.bind(e2);
-  }
-  let a, u, c;
-  if (e instanceof DocumentReference) u = __PRIVATE_cast(e.firestore, Firestore), c = __PRIVATE_newQueryForPath(e._key.path), a = {
-    next: (n2) => {
-      t[o] && t[o](__PRIVATE_convertToDocSnapshot(u, e, n2));
-    },
-    error: t[o + 1],
-    complete: t[o + 2]
-  };
-  else {
-    const n2 = __PRIVATE_cast(e, Query);
-    u = __PRIVATE_cast(n2.firestore, Firestore), c = n2._query;
-    const r2 = new __PRIVATE_ExpUserDataWriter(u);
-    a = {
-      next: (e2) => {
-        t[o] && t[o](new QuerySnapshot(u, r2, n2, e2));
-      },
-      error: t[o + 1],
-      complete: t[o + 2]
-    }, __PRIVATE_validateHasExplicitOrderByForLimitToLast(e._query);
-  }
-  return (function __PRIVATE_firestoreClientListen(e2, t2, n2, r2) {
-    const i2 = new __PRIVATE_AsyncObserver(r2), s2 = new __PRIVATE_QueryListener(t2, i2, n2);
-    return e2.asyncQueue.enqueueAndForget((async () => __PRIVATE_eventManagerListen(await __PRIVATE_getEventManager(e2), s2))), () => {
-      i2.Ou(), e2.asyncQueue.enqueueAndForget((async () => __PRIVATE_eventManagerUnlisten(await __PRIVATE_getEventManager(e2), s2)));
-    };
-  })(ensureFirestoreConfigured(u), c, _, a);
-}
 function executeWrite(e, t) {
   return (function __PRIVATE_firestoreClientWrite(e2, t2) {
     const n = new __PRIVATE_Deferred();
@@ -20816,9 +20508,6 @@ function __PRIVATE_convertToDocSnapshot(e, t, n) {
   const r = n.docs.get(t._key), i = new __PRIVATE_ExpUserDataWriter(e);
   return new DocumentSnapshot(e, i, t._key, r, new SnapshotMetadata(n.hasPendingWrites, n.fromCache), t.converter);
 }
-var Pn = {
-  maxAttempts: 5
-};
 var WriteBatch = class {
   /** @hideconstructor */
   constructor(e, t) {
@@ -20869,88 +20558,11 @@ function __PRIVATE_validateReference(e, t) {
   if ((e = getModularInstance(e)).firestore !== t) throw new FirestoreError(N.INVALID_ARGUMENT, "Provided document reference is from a different Firestore instance.");
   return e;
 }
-var Transaction$1 = class {
-  /** @hideconstructor */
-  constructor(e, t) {
-    this._firestore = e, this._transaction = t, this._dataReader = __PRIVATE_newUserDataReader(e);
-  }
-  /**
-   * Reads the document referenced by the provided {@link DocumentReference}.
-   *
-   * @param documentRef - A reference to the document to be read.
-   * @returns A `DocumentSnapshot` with the read data.
-   */
-  get(e) {
-    const t = __PRIVATE_validateReference(e, this._firestore), n = new __PRIVATE_LiteUserDataWriter(this._firestore);
-    return this._transaction.lookup([t._key]).then(((e2) => {
-      if (!e2 || 1 !== e2.length) return fail(24041);
-      const r = e2[0];
-      if (r.isFoundDocument()) return new DocumentSnapshot$1(this._firestore, n, r.key, r, t.converter);
-      if (r.isNoDocument()) return new DocumentSnapshot$1(this._firestore, n, t._key, null, t.converter);
-      throw fail(18433, {
-        doc: r
-      });
-    }));
-  }
-  set(e, t, n) {
-    const r = __PRIVATE_validateReference(e, this._firestore), i = __PRIVATE_applyFirestoreDataConverter(r.converter, t, n), s = __PRIVATE_parseSetData(this._dataReader, "Transaction.set", r._key, i, null !== r.converter, n);
-    return this._transaction.set(r._key, s), this;
-  }
-  update(e, t, n, ...r) {
-    const i = __PRIVATE_validateReference(e, this._firestore);
-    let s;
-    return s = "string" == typeof (t = getModularInstance(t)) || t instanceof FieldPath ? __PRIVATE_parseUpdateVarargs(this._dataReader, "Transaction.update", i._key, t, n, r) : __PRIVATE_parseUpdateData(this._dataReader, "Transaction.update", i._key, t), this._transaction.update(i._key, s), this;
-  }
-  /**
-   * Deletes the document referred to by the provided {@link DocumentReference}.
-   *
-   * @param documentRef - A reference to the document to be deleted.
-   * @returns This `Transaction` instance. Used for chaining method calls.
-   */
-  delete(e) {
-    const t = __PRIVATE_validateReference(e, this._firestore);
-    return this._transaction.delete(t._key), this;
-  }
-};
-var Transaction = class extends Transaction$1 {
-  // This class implements the same logic as the Transaction API in the Lite SDK
-  // but is subclassed in order to return its own DocumentSnapshot types.
-  /** @hideconstructor */
-  constructor(e, t) {
-    super(e, t), this._firestore = e;
-  }
-  /**
-   * Reads the document referenced by the provided {@link DocumentReference}.
-   *
-   * @param documentRef - A reference to the document to be read.
-   * @returns A `DocumentSnapshot` with the read data.
-   */
-  get(e) {
-    const t = __PRIVATE_validateReference(e, this._firestore), n = new __PRIVATE_ExpUserDataWriter(this._firestore);
-    return super.get(e).then(((e2) => new DocumentSnapshot(this._firestore, n, t._key, e2._document, new SnapshotMetadata(
-      /* hasPendingWrites= */
-      false,
-      /* fromCache= */
-      false
-    ), t.converter)));
-  }
-};
-function runTransaction(e, t, n) {
-  e = __PRIVATE_cast(e, Firestore);
-  const r = Object.assign(Object.assign({}, Pn), n);
-  !(function __PRIVATE_validateTransactionOptions(e2) {
-    if (e2.maxAttempts < 1) throw new FirestoreError(N.INVALID_ARGUMENT, "Max attempts must be at least 1");
-  })(r);
-  return (function __PRIVATE_firestoreClientTransaction(e2, t2, n2) {
-    const r2 = new __PRIVATE_Deferred();
-    return e2.asyncQueue.enqueueAndForget((async () => {
-      const i = await __PRIVATE_getDatastore(e2);
-      new __PRIVATE_TransactionRunner(e2.asyncQueue, i, n2, t2, r2).zu();
-    })), r2.promise;
-  })(ensureFirestoreConfigured(e), ((n2) => t(new Transaction(e, n2))), r);
-}
 function serverTimestamp() {
   return new __PRIVATE_ServerTimestampFieldValueImpl("serverTimestamp");
+}
+function arrayUnion(...e) {
+  return new __PRIVATE_ArrayUnionFieldValueImpl("arrayUnion", e);
 }
 function writeBatch(e) {
   return ensureFirestoreConfigured(e = __PRIVATE_cast(e, Firestore)), new WriteBatch(e, ((t) => executeWrite(e, t)));
@@ -20970,55 +20582,27 @@ function writeBatch(e) {
   registerVersion(F, M, "esm2017");
 })();
 
-// app-build.js
-var app = initializeApp(firebaseConfig);
+// auth-v12-src.js
+var TEMPLATE_VERSION = 12;
+var app = initializeApp(firebaseConfig, "walcon-v12");
 var auth = getAuth(app);
 var db = initializeFirestore(app, { experimentalForceLongPolling: true, useFetchStreams: false });
-var DRIVE_FOLDER_ID = "1tpva5tCWQdmyy2HZ5JEiarKmhzKtGjQV";
-var DRIVE_FOLDER_URL = `https://drive.google.com/drive/folders/${DRIVE_FOLDER_ID}`;
-var DRIVE_SCOPE = "https://www.googleapis.com/auth/drive";
-var DRIVE_CLIENT_KEY = "walcon.googleDriveClientId";
-var DRIVE_TOKEN_KEY = "walcon.googleDriveToken";
-var DRIVE_TOKEN_EXPIRY_KEY = "walcon.googleDriveTokenExpiry";
-var $2 = (s) => document.querySelector(s);
-var $$ = (s) => [...document.querySelectorAll(s)];
-var esc = (s = "") => String(s).replace(/[&<>'\"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[c]);
-var attr = (s = "") => esc(s).replace(/`/g, "&#96;");
-var todayISO = () => (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-var monthKey = (d = /* @__PURE__ */ new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-var monthLabel = (m) => {
-  const [y, mo] = m.split("-").map(Number);
-  return new Intl.DateTimeFormat("en", { month: "long", year: "numeric" }).format(new Date(y, mo - 1, 1));
-};
-var idr = (n) => `Rp ${Number(n || 0).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-var parseIDR = (value) => {
-  const s = String(value || "").trim();
-  if (!s) return 0;
-  if (s.includes(",")) return Number(s.replace(/\./g, "").replace(",", ".")) || 0;
-  if (/^\d{1,3}(\.\d{3})+(\.\d{1,2})?$/.test(s)) return Number(s.replace(/\./g, "")) || 0;
-  return Number(s.replace(/[^0-9.-]/g, "")) || 0;
-};
-var formatIDRInput = (input) => {
-  const n = parseIDR(input.value);
-  input.value = n ? Number(n).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "";
-};
-var timeOf = (ts) => ts?.toMillis ? ts.toMillis() : 0;
 var DEFAULT_CATEGORIES = [
   { id: "income-primary-salary", group: "income", name: "Primary Salary", icon: "\u{1F4B5}", lineItems: ["Main Paycheck"] },
-  { id: "income-side-hustles", group: "income", name: "Side Hustles", icon: "\u{1F4B5}", lineItems: ["Freelancing", "Gig Work", "Craft Sales"] },
+  { id: "income-side-hustles", group: "income", name: "Side Hustles", icon: "\u{1F4B5}", lineItems: ["Freelancing", "Gig Work", "Selling Crafts"] },
   { id: "income-investments", group: "income", name: "Investments", icon: "\u{1F4B5}", lineItems: ["Dividends", "Savings Interest", "Rental Income"] },
   { id: "income-other", group: "income", name: "Other Income", icon: "\u{1F4B5}", lineItems: ["Cash Gifts", "Tax Refunds", "Bonuses"] },
   { id: "need-housing", group: "need", name: "Housing", icon: "\u{1F3E0}", lineItems: ["Rent / Mortgage", "HOA Fees", "Property Taxes"] },
-  { id: "need-utilities", group: "need", name: "Utilities", icon: "\u26A1", lineItems: ["Electricity", "Water", "Gas", "Trash", "Internet", "Phone"] },
+  { id: "need-utilities", group: "need", name: "Utilities", icon: "\u26A1", lineItems: ["Electricity", "Water", "Gas", "Trash", "Internet", "Phone Plans"] },
   { id: "need-groceries", group: "need", name: "Groceries", icon: "\u{1F6D2}", lineItems: ["Food", "Drinks", "Household Essentials"] },
-  { id: "need-transportation", group: "need", name: "Transportation", icon: "\u{1F697}", lineItems: ["Gas", "Public Transit", "Car Insurance", "Parking", "Car Maintenance"] },
-  { id: "need-healthcare", group: "need", name: "Healthcare", icon: "\u{1FA7A}", lineItems: ["Health Insurance", "Doctor Copays", "Prescription Medications"] },
+  { id: "need-transportation", group: "need", name: "Transportation", icon: "\u{1F697}", lineItems: ["Gas", "Public Transit", "Car Insurance", "Parking", "Basic Car Maintenance"] },
+  { id: "need-healthcare", group: "need", name: "Healthcare", icon: "\u{1FA7A}", lineItems: ["Health Insurance Premiums", "Doctor Copays", "Prescription Medications"] },
   { id: "need-insurance", group: "need", name: "Insurance", icon: "\u{1F6E1}\uFE0F", lineItems: ["Renter's Insurance", "Home Insurance", "Life Insurance"] },
-  { id: "want-dining-out", group: "want", name: "Dining Out", icon: "\u{1F37D}\uFE0F", lineItems: ["Restaurants", "Fast Food", "Coffee Shops", "Food Delivery"] },
+  { id: "want-dining-out", group: "want", name: "Dining Out", icon: "\u{1F37D}\uFE0F", lineItems: ["Restaurants", "Fast Food", "Coffee Shops", "Food Delivery Apps"] },
   { id: "want-entertainment", group: "want", name: "Entertainment", icon: "\u{1F3AD}", lineItems: ["Movie Tickets", "Concerts", "Hobbies", "Social Events"] },
-  { id: "want-subscriptions", group: "want", name: "Subscriptions", icon: "\u{1F4FA}", lineItems: ["Streaming Services", "Software", "Gym Membership"] },
+  { id: "want-subscriptions", group: "want", name: "Subscriptions", icon: "\u{1F4FA}", lineItems: ["Streaming Services", "Software", "Gym Memberships"] },
   { id: "want-shopping", group: "want", name: "Shopping", icon: "\u{1F6CD}\uFE0F", lineItems: ["Clothing", "Home Decor", "Electronics", "Personal Grooming"] },
-  { id: "want-travel", group: "want", name: "Travel", icon: "\u2708\uFE0F", lineItems: ["Flights", "Hotels", "Holiday Trips"] },
+  { id: "want-travel", group: "want", name: "Travel", icon: "\u2708\uFE0F", lineItems: ["Vacation Flights", "Hotels", "Holiday Trips"] },
   { id: "debt-credit-cards", group: "debt", name: "Credit Cards", icon: "\u{1F4B3}", lineItems: ["Payment"] },
   { id: "debt-student-loans", group: "debt", name: "Student Loans", icon: "\u{1F393}", lineItems: ["Payment"] },
   { id: "debt-car-loans", group: "debt", name: "Car Loans", icon: "\u{1F698}", lineItems: ["Payment"] },
@@ -21031,880 +20615,188 @@ var DEFAULT_SOURCES = [
   { id: "e-wallet", type: "E-wallet", name: "E-wallet", currentBalance: 0 },
   { id: "other-source", type: "Other", name: "Other", currentBalance: 0 }
 ];
-var SOURCE_TYPES = ["Cash", "Main Bank Account", "Other Bank Account", "E-wallet", "Other"];
-var GROUP_LABELS = { income: "Income", need: "Needs", want: "Wants", debt: "Debt" };
-var GROUP_ORDER = ["income", "need", "want", "debt"];
-var COLORS = ["#9D8BFF", "#72E5AC", "#FFD66B", "#FF6D8E", "#7CCBFF", "#C58BFF", "#8FE0D0", "#FFAE73", "#89A6FF", "#E88BB8", "#B8DE73", "#D9A2FF", "#63D7FF", "#F7CB78", "#A2F09B", "#FF8B75", "#B59BFF", "#6FC2B1", "#E5A7CE", "#AFC2FF"];
-var state = {
-  user: null,
-  month: monthKey(),
-  categories: DEFAULT_CATEGORIES.map((c) => ({ ...c, lineItems: [...c.lineItems || []] })),
-  sources: DEFAULT_SOURCES.map((s) => ({ ...s })),
-  transactions: [],
-  budgets: [],
-  debts: [],
-  bills: [],
-  billStatus: [],
-  settings: { warningThreshold: 85 },
-  unsubs: [],
-  currentView: "home",
-  categoryFilter: "all",
-  transactionType: "expense"
-};
-var userPath = (...parts) => ["users", state.user.uid, ...parts];
-function toast(msg, persist = false) {
-  const el = $2("#toast");
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.add("show");
-  if (!persist) setTimeout(() => el.classList.remove("show"), 2400);
+var $2 = (s) => document.querySelector(s);
+function msg(text) {
+  const el = $2("#authMessage");
+  if (el) el.textContent = text;
 }
-function showError(error, context = "Error") {
-  console.error(context, error);
-  const msg = `${context}: ${error?.message || error}`;
-  const b = $2("#errorBanner");
-  if (b) {
-    b.textContent = msg;
-    b.classList.remove("hidden");
+function busy(v) {
+  ["#loginBtn", "#signupBtn", "#forgotPasswordBtn"].forEach((s) => {
+    const el = $2(s);
+    if (el) el.disabled = v;
+  });
+}
+function friendly(error) {
+  const c = String(error?.code || "");
+  if (c.includes("email-already-in-use")) return "This email already has an account. Use Log In.";
+  if (c.includes("invalid-credential") || c.includes("wrong-password") || c.includes("user-not-found")) return "Email or password is incorrect.";
+  if (c.includes("network-request-failed")) return "Firebase network request failed. Check connectivity and retry.";
+  if (c.includes("invalid-email")) return "Enter a valid email address.";
+  return error?.message || "Authentication failed.";
+}
+async function seedDefaults(user) {
+  const base = ["users", user.uid];
+  const systemRef = doc(db, ...base, "settings", "system");
+  let sys = {};
+  try {
+    const snap = await getDoc(systemRef);
+    sys = snap.exists() ? snap.data() : {};
+  } catch (error) {
+    console.warn("System settings unavailable during seed", error);
   }
-  toast(msg, true);
-}
-function clearError() {
-  $2("#errorBanner")?.classList.add("hidden");
-}
-function closeModal() {
-  $2("#modal")?.classList.add("hidden");
-  if ($2("#modalBody")) $2("#modalBody").innerHTML = "";
-}
-function empty(text) {
-  return `<div class="item"><div class="grow"><div class="meta">${esc(text)}</div></div></div>`;
-}
-function category(id) {
-  return state.categories.find((x2) => x2.id === id);
-}
-function source(id) {
-  return state.sources.find((x2) => x2.id === id);
-}
-function budget(id) {
-  return state.budgets.find((x2) => x2.id === id);
-}
-function monthExpenses() {
-  return state.transactions.filter((t) => t.type === "expense" && t.month === state.month);
-}
-function monthIncome() {
-  return state.transactions.filter((t) => t.type === "income" && t.month === state.month);
-}
-function linkedSpent(budgetId) {
-  return monthExpenses().filter((t) => t.budgetId === budgetId).reduce((a, t) => a + Number(t.amount || 0), 0);
-}
-function totalBalance() {
-  return state.sources.reduce((a, s) => a + Number(s.currentBalance || 0), 0);
-}
-function budgetTotals() {
-  const total = state.budgets.reduce((a, b) => a + Number(b.amount || 0), 0);
-  const spent = state.budgets.reduce((a, b) => a + linkedSpent(b.id), 0);
-  return { total, spent, remaining: total - spent };
-}
-function budgetStatus(entry) {
-  const spent = linkedSpent(entry.id), amount = Number(entry.amount || 0), rem = amount - spent, pct = amount ? spent / amount * 100 : 0;
-  return { spent, rem, pct, cls: rem < 0 ? "over" : pct >= Number(state.settings.warningThreshold || 85) ? "warn" : "ok" };
-}
-function showView(name4) {
-  state.currentView = name4;
-  $$(".view").forEach((v) => v.classList.toggle("active", v.dataset.view === name4));
-  $$(".nav[data-view-go]").forEach((n) => n.classList.toggle("active", n.dataset.viewGo === name4));
-  $2("#bottomNav")?.classList.toggle("hidden", name4 === "auth" || name4 === "loading");
-  if ($2("#app")) $2("#app").scrollTop = 0;
-  if (name4 === "transaction") renderTransactionForm();
-  if (name4 === "history") renderHistory();
-  if (name4 === "settings") renderSettings();
-}
-async function initializeDefaultsOnce() {
-  const systemRef = doc(db, ...userPath("settings", "system"));
-  const systemSnap = await getDoc(systemRef);
-  if (systemSnap.exists() && systemSnap.data().defaultsInitialized === true) return;
-  const [catSnap, sourceSnap] = await Promise.all([
-    getDocs(collection(db, ...userPath("categories"))),
-    getDocs(collection(db, ...userPath("balanceSources")))
-  ]);
+  if (Number(sys.defaultTemplateVersion || 0) >= TEMPLATE_VERSION) return;
+  let catsSnap = null, sourcesSnap = null;
+  try {
+    [catsSnap, sourcesSnap] = await Promise.all([getDocs(collection(db, ...base, "categories")), getDocs(collection(db, ...base, "balanceSources"))]);
+  } catch (error) {
+    console.warn("Collection preflight unavailable; attempting direct seed", error);
+  }
+  const existingCats = new Set(catsSnap?.docs?.map((d) => d.id) || []);
+  const existingSources = new Set(sourcesSnap?.docs?.map((d) => d.id) || []);
+  const deletedCats = new Set(Array.isArray(sys.deletedDefaultCategoryIds) ? sys.deletedDefaultCategoryIds : []);
+  const deletedSources = new Set(Array.isArray(sys.deletedDefaultSourceIds) ? sys.deletedDefaultSourceIds : []);
   const batch = writeBatch(db);
-  if (catSnap.empty) {
-    for (const c of DEFAULT_CATEGORIES) batch.set(doc(db, ...userPath("categories", c.id)), { ...c, isDefault: true, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  for (const item of DEFAULT_CATEGORIES) {
+    if (!existingCats.has(item.id) && !deletedCats.has(item.id)) batch.set(doc(db, ...base, "categories", item.id), { ...item, isDefault: true, defaultTemplateVersion: TEMPLATE_VERSION, createdAt: serverTimestamp(), updatedAt: serverTimestamp() }, { merge: true });
   }
-  if (sourceSnap.empty) {
-    for (const s of DEFAULT_SOURCES) batch.set(doc(db, ...userPath("balanceSources", s.id)), { ...s, isDefault: true, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  for (const item of DEFAULT_SOURCES) {
+    if (!existingSources.has(item.id) && !deletedSources.has(item.id)) batch.set(doc(db, ...base, "balanceSources", item.id), { ...item, isDefault: true, createdAt: serverTimestamp(), updatedAt: serverTimestamp() }, { merge: true });
   }
-  batch.set(systemRef, { defaultsInitialized: true, initializedAt: serverTimestamp() }, { merge: true });
+  batch.set(systemRef, { defaultsInitialized: true, defaultTemplateVersion: TEMPLATE_VERSION, defaultTemplateName: "WalCon Default Finance Template", updatedAt: serverTimestamp() }, { merge: true });
   await batch.commit();
-  const prefRef = doc(db, ...userPath("settings", "preferences"));
-  const prefSnap = await getDoc(prefRef);
-  if (!prefSnap.exists()) await setDoc(prefRef, { warningThreshold: 85, currency: "IDR", updatedAt: serverTimestamp() });
 }
-function stopListeners() {
-  state.unsubs.forEach((u) => {
-    try {
-      u();
-    } catch {
+async function markDeleted(kind, id) {
+  const user = auth.currentUser;
+  if (!user) return;
+  const field = kind === "source" ? "deletedDefaultSourceIds" : "deletedDefaultCategoryIds";
+  await setDoc(doc(db, "users", user.uid, "settings", "system"), { [field]: arrayUnion(id), updatedAt: serverTimestamp() }, { merge: true });
+}
+async function login() {
+  const email = $2("#authEmail")?.value.trim() || "", password = $2("#authPassword")?.value || "";
+  if (!email || !password) {
+    msg("Enter email and password.");
+    return;
+  }
+  busy(true);
+  msg("Signing in\u2026");
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    msg("Signed in. Loading WalCon\u2026");
+    seedDefaults(cred.user).catch((e) => console.warn("Template seed deferred", e));
+    sessionStorage.setItem("walcon-v12-auth", cred.user.uid);
+    setTimeout(() => location.reload(), 250);
+  } catch (e) {
+    msg(friendly(e));
+    busy(false);
+  }
+}
+async function signup() {
+  const email = $2("#authEmail")?.value.trim() || "", password = $2("#authPassword")?.value || "";
+  if (!email || !password) {
+    msg("Enter email and password.");
+    return;
+  }
+  busy(true);
+  msg("Creating account\u2026");
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    seedDefaults(cred.user).catch((e) => console.warn("Template seed deferred", e));
+    msg("Account created. Loading WalCon\u2026");
+    setTimeout(() => location.reload(), 250);
+  } catch (e) {
+    msg(friendly(e));
+    busy(false);
+  }
+}
+async function reset() {
+  const email = $2("#authEmail")?.value.trim() || "";
+  if (!email) {
+    msg("Enter your email first.");
+    return;
+  }
+  busy(true);
+  try {
+    await sendPasswordResetEmail(auth, email);
+    msg("Password reset email sent.");
+  } catch (e) {
+    msg(friendly(e));
+  } finally {
+    busy(false);
+  }
+}
+function installUI() {
+  const loginBtn = $2("#loginBtn"), signupBtn = $2("#signupBtn");
+  if (loginBtn) {
+    loginBtn.type = "button";
+    loginBtn.onclick = null;
+    loginBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      login();
+    }, true);
+  }
+  if (signupBtn) {
+    signupBtn.type = "button";
+    signupBtn.onclick = null;
+    signupBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      signup();
+    }, true);
+  }
+  if (!$2("#forgotPasswordBtn") && $2("#authMessage")) {
+    const b = document.createElement("button");
+    b.id = "forgotPasswordBtn";
+    b.type = "button";
+    b.className = "link";
+    b.textContent = "Forgot Password";
+    b.style.marginTop = "10px";
+    $2("#authMessage").before(b);
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      reset();
+    }, true);
+  }
+  $2("#authPassword")?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      login();
     }
-  });
-  state.unsubs = [];
-}
-function listen(target, handler, label) {
-  state.unsubs.push(onSnapshot(target, (s) => {
-    handler(s.docs.map((d) => ({ id: d.id, ...d.data() })));
-    clearError();
-  }, (e) => showError(e, `Load ${label} failed`)));
-}
-function subscribe() {
-  stopListeners();
-  listen(collection(db, ...userPath("categories")), (v) => {
-    state.categories = v.sort((a, b) => GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group) || String(a.name).localeCompare(String(b.name)));
-    renderAll();
-  }, "categories");
-  listen(collection(db, ...userPath("balanceSources")), (v) => {
-    state.sources = v.sort((a, b) => String(a.name).localeCompare(String(b.name)));
-    renderAll();
-  }, "balances");
-  listen(query(collection(db, ...userPath("transactions")), where("month", "==", state.month)), (v) => {
-    state.transactions = v;
-    renderAll();
-  }, "transactions");
-  listen(query(collection(db, ...userPath("budgets")), where("month", "==", state.month)), (v) => {
-    state.budgets = v;
-    renderAll();
-  }, "budgets");
-  listen(collection(db, ...userPath("debts")), (v) => {
-    state.debts = v.filter((x2) => x2.active !== false);
-    renderDebts();
-  }, "debts");
-  listen(collection(db, ...userPath("bills")), (v) => {
-    state.bills = v.filter((x2) => x2.active !== false).sort((a, b) => (a.dueDay || 99) - (b.dueDay || 99));
-    renderBills();
-  }, "bills");
-  listen(query(collection(db, ...userPath("billStatus")), where("month", "==", state.month)), (v) => {
-    state.billStatus = v;
-    renderBills();
-  }, "bill status");
-  state.unsubs.push(onSnapshot(doc(db, ...userPath("settings", "preferences")), (s) => {
-    state.settings = { warningThreshold: 85, ...s.exists() ? s.data() : {} };
-    renderAll();
-  }, (e) => showError(e, "Load settings failed")));
-}
-function changeMonth(m) {
-  state.month = m || monthKey();
-  if ($2("#budgetMonth")) $2("#budgetMonth").value = state.month;
-  if ($2("#billMonth")) $2("#billMonth").value = state.month;
-  if ($2("#historyMonth")) $2("#historyMonth").value = state.month;
-  subscribe();
-}
-function renderAll() {
-  renderHome();
-  renderBalances();
-  renderCategories();
-  renderBudgets();
-  renderDebts();
-  renderBills();
-  if (state.currentView === "transaction") renderTransactionForm();
-  if (state.currentView === "history") renderHistory();
-  if (state.currentView === "settings") renderSettings();
-}
-function renderHome() {
-  if (!state.user) return;
-  $2("#homeMonthLabel").textContent = monthLabel(state.month);
-  $2("#homeBalance").textContent = idr(totalBalance());
-  $2("#homeSourceCount").textContent = state.sources.length;
-  const bt2 = budgetTotals();
-  $2("#homeBudgetLeft").textContent = idr(bt2.remaining);
-  const spent = monthExpenses().reduce((a, t) => a + Number(t.amount || 0), 0);
-  $2("#homeSpent").textContent = idr(spent);
-  const income = monthIncome().reduce((a, t) => a + Number(t.amount || 0), 0);
-  if ($2("#homeIncome")) $2("#homeIncome").textContent = idr(income);
-  $2("#homeBalances").innerHTML = state.sources.length ? state.sources.map((s) => `<button class="balance-chip" data-edit-source="${s.id}"><span>${esc(s.type || "Source")}</span><strong>${esc(s.name)}</strong><strong>${idr(s.currentBalance)}</strong></button>`).join("") : "";
-  const grouped = {};
-  for (const t of monthExpenses()) {
-    const key = t.categoryId || t.categoryName || "other";
-    if (!grouped[key]) grouped[key] = { name: t.categoryName || category(t.categoryId)?.name || "Other", value: 0 };
-    grouped[key].value += Number(t.amount || 0);
-  }
-  const entries = Object.values(grouped).sort((a, b) => b.value - a.value), total = entries.reduce((a, x2) => a + x2.value, 0);
-  $2("#donutAmount").textContent = idr(total).replace(",00", "");
-  $2("#graphTotal").textContent = entries.length ? `${entries.length} categories` : "No expenses";
-  if (!entries.length) {
-    $2("#expenseDonut").style.background = "conic-gradient(rgba(255,255,255,.10) 0 100%)";
-    $2("#expenseLegend").innerHTML = '<div class="meta">No expense data this month.</div>';
-  } else {
-    let cursor = 0;
-    const segments = [];
-    entries.forEach((e, i) => {
-      const pct = e.value / total * 100;
-      segments.push(`${COLORS[i % COLORS.length]} ${cursor}% ${cursor + pct}%`);
-      cursor += pct;
-    });
-    $2("#expenseDonut").style.background = `conic-gradient(${segments.join(",")})`;
-    $2("#expenseLegend").innerHTML = entries.map((e, i) => `<div class="legend-item"><i class="legend-dot" style="background:${COLORS[i % COLORS.length]}"></i><span>${esc(e.name)}</span><strong>${Math.round(e.value / total * 100)}%</strong></div>`).join("");
-  }
-  const recent = [...state.transactions].sort((a, b) => timeOf(b.createdAt) - timeOf(a.createdAt)).slice(0, 6);
-  $2("#recentExpenses").innerHTML = recent.length ? recent.map((t) => `<div class="item"><div class="item-icon">${category(t.categoryId)?.icon || (t.type === "income" ? "\uFF0B" : "\u2212")}</div><div class="grow"><div class="name">${esc(t.name || t.lineItem || "Transaction")}</div><div class="meta">${esc(t.categoryName || "")} \u2022 ${esc(t.lineItem || "")} \u2022 ${esc(t.sourceName || "")}</div></div><div class="money ${t.type === "income" ? "green" : "red"}">${t.type === "income" ? "+" : "\u2212"} ${idr(t.amount)}</div></div>`).join("") : empty("No transactions this month.");
-}
-function renderBalances() {
-  $2("#balanceTotal").textContent = idr(totalBalance());
-  $2("#balanceList").innerHTML = state.sources.length ? state.sources.map((s) => `<div class="card"><div class="row-head"><div><div class="name">${esc(s.name)}</div><span class="source-badge">${esc(s.type || "Other")}</span><div class="hero-number small">${idr(s.currentBalance)}</div></div><div class="row-actions"><button class="btn sm" data-edit-source="${s.id}">Edit</button><button class="btn sm danger" data-delete-source="${s.id}">Remove</button></div></div></div>`).join("") : empty("No balance sources.");
-}
-function renderCategories() {
-  const filtered = state.categoryFilter === "all" ? state.categories : state.categories.filter((c) => c.group === state.categoryFilter);
-  let html = "";
-  for (const group of GROUP_ORDER) {
-    const cats = filtered.filter((c) => c.group === group);
-    if (!cats.length) continue;
-    html += `<div class="group-label">${GROUP_LABELS[group]}</div>`;
-    html += cats.map((c) => `<div class="card"><div class="row-head"><div><div class="name">${c.icon || "\u2022"} ${esc(c.name)}</div><span class="kind-badge">${GROUP_LABELS[c.group] || c.group}</span></div><div class="row-actions"><button class="btn sm" data-add-line="${c.id}">+ Line</button><button class="btn sm" data-edit-category="${c.id}">Edit</button><button class="btn sm danger" data-delete-category="${c.id}">Remove</button></div></div><div class="line-items">${(c.lineItems || []).length ? (c.lineItems || []).map((line) => `<span class="line-pill">${esc(line)} <button data-remove-line="${c.id}" data-line="${attr(line)}">\xD7</button></span>`).join("") : '<span class="meta">No line items</span>'}</div></div>`).join("");
-  }
-  $2("#categoryList").innerHTML = html || empty("No categories in this filter.");
-}
-function setTransactionType(type) {
-  state.transactionType = type === "income" ? "income" : "expense";
-  $$("[data-transaction-type]").forEach((b) => b.classList.toggle("active", b.dataset.transactionType === state.transactionType));
-  $2("#transactionTitle").textContent = state.transactionType === "income" ? "Add income" : "Add expense";
-  $2("#sourceLabelText").textContent = state.transactionType === "income" ? "Destination balance source" : "Payment method";
-  $2("#budgetModeBlock").classList.toggle("hidden", state.transactionType === "income");
-  $2("#receiptBlock").classList.toggle("hidden", state.transactionType === "income");
-  $2("#transactionSubmit").textContent = state.transactionType === "income" ? "Save Income" : "Save Expense";
-  renderTransactionForm();
-}
-function renderTransactionForm() {
-  if (!state.user) return;
-  if (!$2("#transactionDate").value) $2("#transactionDate").value = todayISO();
-  const type = state.transactionType;
-  const currentCat = $2("#transactionCategory").value;
-  const cats = state.categories.filter((c) => type === "income" ? c.group === "income" : c.group !== "income");
-  $2("#transactionCategory").innerHTML = '<option value="">Select Category</option>' + cats.map((c) => `<option value="${c.id}" ${c.id === currentCat ? "selected" : ""}>${esc(GROUP_LABELS[c.group] + " \u2014 " + c.name)}</option>`).join("");
-  const currentSource = $2("#transactionSource").value;
-  $2("#transactionSource").innerHTML = '<option value="">Select balance source</option>' + state.sources.map((s) => `<option value="${s.id}" ${s.id === currentSource ? "selected" : ""}>${esc(s.name)} \u2014 ${idr(s.currentBalance)}</option>`).join("");
-  refreshTransactionLines();
-  renderDriveStatus();
-}
-function refreshTransactionLines() {
-  const c = category($2("#transactionCategory").value), selected = $2("#transactionLine").value;
-  $2("#transactionLine").innerHTML = '<option value="">Select Line Item</option>' + (c?.lineItems || []).map((line) => `<option value="${attr(line)}" ${line === selected ? "selected" : ""}>${esc(line)}</option>`).join("");
-  updateBudgetMatchHint();
-}
-async function findBudgetFor(month, categoryId, lineItem) {
-  if (month === state.month) return state.budgets.find((x2) => x2.month === month && x2.categoryId === categoryId && x2.lineItem === lineItem) || null;
-  const snap = await getDocs(query(collection(db, ...userPath("budgets")), where("month", "==", month)));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() })).find((x2) => x2.categoryId === categoryId && x2.lineItem === lineItem) || null;
-}
-function updateBudgetMatchHint() {
-  if (state.transactionType === "income") return;
-  const linked = $2("#transactionLinked").checked, catId = $2("#transactionCategory").value, line = $2("#transactionLine").value, date = $2("#transactionDate").value || todayISO(), m = date.slice(0, 7);
-  if (!linked) {
-    $2("#budgetMatchHint").textContent = "Out-of-budget expense: the selected balance source will be reduced, but no budget item will be affected.";
-    return;
-  }
-  if (m !== state.month) {
-    $2("#budgetMatchHint").textContent = `Budget link will be checked against ${monthLabel(m)} when saved.`;
-    return;
-  }
-  const b = state.budgets.find((x2) => x2.month === m && x2.categoryId === catId && x2.lineItem === line);
-  if (!b) {
-    $2("#budgetMatchHint").textContent = "No matching budget item for this month. Add one in Budget or turn budget linking off.";
-    return;
-  }
-  const st2 = budgetStatus(b);
-  $2("#budgetMatchHint").textContent = `Linked to ${b.categoryName} \u2192 ${b.lineItem}. Remaining before this expense: ${idr(st2.rem)}.`;
-}
-function renderBudgets() {
-  $2("#budgetMonth").value = state.month;
-  const bt2 = budgetTotals();
-  $2("#budgetTotal").textContent = idr(bt2.total);
-  $2("#budgetSpent").textContent = idr(bt2.spent);
-  $2("#budgetRemaining").textContent = idr(bt2.remaining);
-  $2("#budgetList").innerHTML = state.budgets.length ? state.budgets.sort((a, b) => String(a.categoryName).localeCompare(String(b.categoryName))).map((b) => {
-    const st2 = budgetStatus(b);
-    return `<div class="card"><div class="row-head"><div><div class="name">${esc(b.categoryName)} \u2192 ${esc(b.lineItem)}</div><div class="meta">Fixed monthly budget ${idr(b.amount)} \u2022 Linked spending ${idr(st2.spent)}</div><div class="budget-status ${st2.cls}">${st2.rem < 0 ? `Over ${idr(Math.abs(st2.rem))}` : `Remaining ${idr(st2.rem)}`}</div></div><div class="row-actions"><button class="btn sm" data-edit-budget="${b.id}">Edit</button><button class="btn sm danger" data-delete-budget="${b.id}">Remove</button></div></div><div class="progress ${st2.cls}"><i style="width:${Math.min(100, st2.pct)}%"></i></div></div>`;
-  }).join("") : empty("No budget items for this month. Add a fixed budget per line item.");
-}
-function renderDebts() {
-  if (!$2("#debtTotal")) return;
-  $2("#debtTotal").textContent = idr(state.debts.reduce((a, d) => a + Number(d.currentBalance || 0), 0));
-  $2("#debtList").innerHTML = state.debts.length ? state.debts.map((d) => {
-    const original = Number(d.originalBalance || 0), current = Number(d.currentBalance || 0), paid = Math.max(0, original - current), pct = original ? paid / original * 100 : 0;
-    return `<div class="card"><div class="row-head"><div><div class="name">${esc(d.name)}</div><div class="meta">${esc(d.categoryName || "Debt")} \u2022 Original ${idr(original)}</div></div><div class="row-actions"><button class="btn sm" data-pay-debt="${d.id}">Pay</button><button class="btn sm" data-edit-debt="${d.id}">Edit</button><button class="btn sm danger" data-delete-debt="${d.id}">Remove</button></div></div><div class="progress"><i style="width:${Math.min(100, pct)}%"></i></div><div class="summary3" style="margin-top:10px"><div><span>Paid</span><strong>${idr(paid)}</strong></div><div><span>Remaining</span><strong>${idr(current)}</strong></div><div><span>Progress</span><strong>${Math.round(pct)}%</strong></div></div></div>`;
-  }).join("") : empty("No debt items yet.");
-}
-function renderBills() {
-  if (!$2("#billMonth")) return;
-  $2("#billMonth").value = state.month;
-  $2("#billList").innerHTML = state.bills.length ? state.bills.map((b) => {
-    const s = state.billStatus.find((x2) => x2.billId === b.id);
-    return `<div class="item"><div class="item-icon">\u2713</div><div class="grow"><div class="name">${esc(b.name)}</div><div class="meta">${b.dueDay ? `Due day ${b.dueDay}` : "No due day"} \u2022 ${idr(b.amount || 0)}</div></div><button class="btn sm ${s?.paid ? "primary" : ""}" data-toggle-bill="${b.id}">${s?.paid ? "Paid" : "Unpaid"}</button><button class="btn sm danger" data-delete-bill="${b.id}">\xD7</button></div>`;
-  }).join("") : empty("No recurring bills yet.");
-}
-function renderHistory() {
-  $2("#historyMonth").value = state.month;
-  const items = [...state.transactions].sort((a, b) => String(b.date).localeCompare(String(a.date)) || timeOf(b.createdAt) - timeOf(a.createdAt));
-  $2("#historyList").innerHTML = items.length ? items.map((t) => `<div class="item"><div class="item-icon">${category(t.categoryId)?.icon || (t.type === "income" ? "\uFF0B" : "\u2212")}</div><div class="grow"><div class="name">${esc(t.name || t.lineItem || "Transaction")}</div><div class="meta">${esc(t.date || "")} \u2022 ${esc(t.categoryName || "")} \u2192 ${esc(t.lineItem || "")} \u2022 ${esc(t.sourceName || "")}${t.notes ? ` \u2022 ${esc(t.notes)}` : ""}</div>${t.receiptUrl ? `<a href="${attr(t.receiptUrl)}" target="_blank" rel="noopener" class="link">View receipt</a>` : ""}</div><div><div class="money ${t.type === "income" ? "green" : "red"}">${t.type === "income" ? "+" : "\u2212"} ${idr(t.amount)}</div><button class="btn sm danger" data-delete-transaction="${t.id}">Remove</button></div></div>`).join("") : empty("No transactions this month.");
-}
-function renderSettings() {
-  if ($2("#warningThreshold")) $2("#warningThreshold").value = Number(state.settings.warningThreshold || 85);
-  if ($2("#settingsEmail")) $2("#settingsEmail").textContent = state.user?.email || "";
-  if ($2("#driveClientId")) $2("#driveClientId").value = localStorage.getItem(DRIVE_CLIENT_KEY) || "";
-  renderDriveStatus();
-}
-function openModal(type, id = null) {
-  const body = $2("#modalBody"), title = $2("#modalTitle");
-  if (type === "balance") {
-    const s = id ? source(id) : null;
-    title.textContent = s ? "Edit balance source" : "Add balance source";
-    body.innerHTML = `<label>Source type<select id="mSourceType">${SOURCE_TYPES.map((x2) => `<option ${x2 === (s?.type || "Cash") ? "selected" : ""}>${x2}</option>`).join("")}</select></label><label style="margin-top:12px">Name<input id="mSourceName" value="${attr(s?.name || "")}" placeholder="e.g. BCA Main"></label><label style="margin-top:12px">Current balance (IDR)<input id="mSourceBalance" class="idr-input" inputmode="decimal" value="${s ? Number(s.currentBalance || 0).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ""}" placeholder="0,00"></label><button class="btn primary full" data-save-source="${id || ""}">Save</button>`;
-  } else if (type === "category") {
-    const c = id ? category(id) : null;
-    title.textContent = c ? "Edit category" : "Add category";
-    body.innerHTML = `<label>Group<select id="mCatGroup">${GROUP_ORDER.map((g) => `<option value="${g}" ${g === (c?.group || "need") ? "selected" : ""}>${GROUP_LABELS[g]}</option>`).join("")}</select></label><label style="margin-top:12px">Category name<input id="mCatName" value="${attr(c?.name || "")}" placeholder="Category name"></label><label style="margin-top:12px">Icon / emoji<input id="mCatIcon" value="${attr(c?.icon || "")}" maxlength="4" placeholder="\u2022"></label><label style="margin-top:12px">Line items \u2014 one per line<textarea id="mCatLines" placeholder="Item 1
-Item 2">${esc((c?.lineItems || []).join("\n"))}</textarea></label><button class="btn primary full" data-save-category="${id || ""}">Save</button>`;
-  } else if (type === "line") {
-    const c = category(id);
-    title.textContent = `Add line item \u2014 ${c?.name || ""}`;
-    body.innerHTML = `<label>Line item name<input id="mLineName" placeholder="New line item"></label><button class="btn primary full" data-save-line="${id}">Add Line Item</button>`;
-  } else if (type === "budget") {
-    const b = id ? budget(id) : null;
-    title.textContent = b ? "Edit budget item" : "Add budget item";
-    const cats = state.categories.filter((c) => c.group !== "income");
-    body.innerHTML = `<label>Category<select id="mBudgetCat"><option value="">Select</option>${cats.map((c) => `<option value="${c.id}" ${c.id === b?.categoryId ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</select></label><label style="margin-top:12px">Line item<select id="mBudgetLine"><option value="${attr(b?.lineItem || "")}">${esc(b?.lineItem || "Select category first")}</option></select></label><label style="margin-top:12px">Fixed monthly budget (IDR)<input id="mBudgetAmount" class="idr-input" inputmode="decimal" value="${b ? Number(b.amount || 0).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ""}" placeholder="0,00"></label><button class="btn primary full" data-save-budget="${id || ""}">Save Budget</button>`;
-    setTimeout(() => refreshModalBudgetLines(b?.lineItem || ""), 0);
-  } else if (type === "debt") {
-    const d = id ? state.debts.find((x2) => x2.id === id) : null, debtCats = state.categories.filter((c) => c.group === "debt");
-    title.textContent = d ? "Edit debt" : "Add debt";
-    body.innerHTML = `<label>Debt category<select id="mDebtCat"><option value="">Select</option>${debtCats.map((c) => `<option value="${c.id}" ${c.id === d?.categoryId ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</select></label><label style="margin-top:12px">Debt name<input id="mDebtName" value="${attr(d?.name || "")}" placeholder="e.g. BCA Visa"></label><label style="margin-top:12px">Original amount<input id="mDebtOriginal" class="idr-input" inputmode="decimal" value="${d ? Number(d.originalBalance || 0).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ""}"></label><label style="margin-top:12px">Current remaining<input id="mDebtCurrent" class="idr-input" inputmode="decimal" value="${d ? Number(d.currentBalance || 0).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ""}"></label><button class="btn primary full" data-save-debt="${id || ""}">Save Debt</button>`;
-  } else if (type === "payDebt") {
-    const d = state.debts.find((x2) => x2.id === id);
-    title.textContent = `Pay \u2014 ${d?.name || "Debt"}`;
-    body.innerHTML = `<div class="meta">Remaining ${idr(d?.currentBalance || 0)}</div><label style="margin-top:12px">Payment source<select id="mDebtSource"><option value="">Select source</option>${state.sources.map((s) => `<option value="${s.id}">${esc(s.name)} \u2014 ${idr(s.currentBalance)}</option>`).join("")}</select></label><label style="margin-top:12px">Payment amount<input id="mDebtPayAmount" class="idr-input" inputmode="decimal" placeholder="0,00"></label><label class="switchline" style="margin-top:12px"><input id="mDebtLinkBudget" type="checkbox"><span>Link payment to matching monthly budget if available</span></label><button class="btn primary full" data-apply-debt="${id}">Apply Payment</button>`;
-  } else if (type === "bill") {
-    title.textContent = "Add recurring bill";
-    body.innerHTML = `<label>Bill name<input id="mBillName" placeholder="Electricity"></label><div class="grid2" style="margin-top:12px"><label>Amount<input id="mBillAmount" class="idr-input" inputmode="decimal" placeholder="0,00"></label><label>Due day<input id="mBillDue" type="number" min="1" max="31"></label></div><button class="btn primary full" data-save-bill>Save Bill</button>`;
-  }
-  $2("#modal").classList.remove("hidden");
-}
-function refreshModalBudgetLines(selected = "") {
-  const c = category($2("#mBudgetCat")?.value);
-  if (!$2("#mBudgetLine")) return;
-  $2("#mBudgetLine").innerHTML = '<option value="">Select line item</option>' + (c?.lineItems || []).map((l) => `<option value="${attr(l)}" ${l === selected ? "selected" : ""}>${esc(l)}</option>`).join("");
-}
-async function saveSource(id) {
-  const name4 = $2("#mSourceName").value.trim(), type = $2("#mSourceType").value, currentBalance = parseIDR($2("#mSourceBalance").value);
-  if (!name4) return toast("Source name required");
-  try {
-    const data = { name: name4, type, currentBalance, updatedAt: serverTimestamp() };
-    if (id) await updateDoc(doc(db, ...userPath("balanceSources", id)), data);
-    else await addDoc(collection(db, ...userPath("balanceSources")), { ...data, createdAt: serverTimestamp() });
-    closeModal();
-    toast("Balance source saved");
-  } catch (e) {
-    showError(e, "Save balance source failed");
-  }
-}
-async function saveCategory(id) {
-  const name4 = $2("#mCatName").value.trim(), group = $2("#mCatGroup").value, icon = $2("#mCatIcon").value.trim(), lineItems = [...new Set($2("#mCatLines").value.split("\n").map((x2) => x2.trim()).filter(Boolean))];
-  if (!name4) return toast("Category name required");
-  try {
-    const data = { name: name4, group, icon, lineItems, updatedAt: serverTimestamp() };
-    if (id) await updateDoc(doc(db, ...userPath("categories", id)), data);
-    else await addDoc(collection(db, ...userPath("categories")), { ...data, isDefault: false, createdAt: serverTimestamp() });
-    closeModal();
-    toast("Category saved");
-  } catch (e) {
-    showError(e, "Save category failed");
-  }
-}
-async function addLine(id) {
-  const name4 = $2("#mLineName").value.trim(), c = category(id);
-  if (!name4) return toast("Line item required");
-  if (!c) return;
-  try {
-    await updateDoc(doc(db, ...userPath("categories", id)), { lineItems: [.../* @__PURE__ */ new Set([...c.lineItems || [], name4])], updatedAt: serverTimestamp() });
-    closeModal();
-    toast("Line item added");
-  } catch (e) {
-    showError(e, "Add line item failed");
-  }
-}
-async function removeLine(id, line) {
-  const c = category(id);
-  if (!c || !confirm(`Remove line item \u201C${line}\u201D? Existing history and budgets are kept.`)) return;
-  try {
-    await updateDoc(doc(db, ...userPath("categories", id)), { lineItems: (c.lineItems || []).filter((x2) => x2 !== line), updatedAt: serverTimestamp() });
-    toast("Line item removed");
-  } catch (e) {
-    showError(e, "Remove line item failed");
-  }
-}
-async function saveBudget(id) {
-  const categoryId = $2("#mBudgetCat").value, lineItem = $2("#mBudgetLine").value, amount = parseIDR($2("#mBudgetAmount").value), c = category(categoryId);
-  if (!c || !lineItem || amount <= 0) return toast("Category, line item and amount are required");
-  try {
-    if (!id && state.budgets.find((b) => b.categoryId === categoryId && b.lineItem === lineItem)) return toast("This line item already has a budget this month");
-    const data = { month: state.month, categoryId, categoryName: c.name, lineItem, amount, updatedAt: serverTimestamp() };
-    if (id) await updateDoc(doc(db, ...userPath("budgets", id)), data);
-    else await addDoc(collection(db, ...userPath("budgets")), { ...data, createdAt: serverTimestamp() });
-    closeModal();
-    toast("Budget saved");
-  } catch (e) {
-    showError(e, "Save budget failed");
-  }
-}
-async function saveDebt(id) {
-  const categoryId = $2("#mDebtCat").value, c = category(categoryId), name4 = $2("#mDebtName").value.trim(), original = parseIDR($2("#mDebtOriginal").value), current = parseIDR($2("#mDebtCurrent").value || $2("#mDebtOriginal").value);
-  if (!c || !name4 || original <= 0) return toast("Debt category, name and original amount required");
-  try {
-    const data = { categoryId, categoryName: c.name, name: name4, originalBalance: original, currentBalance: current, active: true, updatedAt: serverTimestamp() };
-    if (id) await updateDoc(doc(db, ...userPath("debts", id)), data);
-    else await addDoc(collection(db, ...userPath("debts")), { ...data, createdAt: serverTimestamp() });
-    closeModal();
-    toast("Debt saved");
-  } catch (e) {
-    showError(e, "Save debt failed");
-  }
-}
-async function saveBill() {
-  const name4 = $2("#mBillName").value.trim(), amount = parseIDR($2("#mBillAmount").value), dueDay = Number($2("#mBillDue").value || 0) || null;
-  if (!name4) return toast("Bill name required");
-  try {
-    await addDoc(collection(db, ...userPath("bills")), { name: name4, amount, dueDay, active: true, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
-    closeModal();
-    toast("Bill saved");
-  } catch (e) {
-    showError(e, "Save bill failed");
-  }
-}
-var gisPromise = null;
-function loadGoogleIdentity() {
-  if (window.google?.accounts?.oauth2) return Promise.resolve();
-  if (gisPromise) return gisPromise;
-  gisPromise = new Promise((resolve, reject) => {
-    const s = document.createElement("script");
-    s.src = "https://accounts.google.com/gsi/client";
-    s.async = true;
-    s.defer = true;
-    s.onload = resolve;
-    s.onerror = () => reject(new Error("Could not load Google Identity Services"));
-    document.head.appendChild(s);
-  });
-  return gisPromise;
-}
-function driveClientId() {
-  return localStorage.getItem(DRIVE_CLIENT_KEY) || "";
-}
-function driveToken() {
-  const token = sessionStorage.getItem(DRIVE_TOKEN_KEY) || "", expiry = Number(sessionStorage.getItem(DRIVE_TOKEN_EXPIRY_KEY) || 0);
-  if (!token || Date.now() > expiry) {
-    sessionStorage.removeItem(DRIVE_TOKEN_KEY);
-    sessionStorage.removeItem(DRIVE_TOKEN_EXPIRY_KEY);
-    return "";
-  }
-  return token;
-}
-function setDriveToken(token, expiresIn) {
-  sessionStorage.setItem(DRIVE_TOKEN_KEY, token);
-  sessionStorage.setItem(DRIVE_TOKEN_EXPIRY_KEY, String(Date.now() + Math.max(60, Number(expiresIn || 3600) - 60) * 1e3));
-  renderDriveStatus();
-}
-async function connectDrive() {
-  const clientId = driveClientId();
-  if (!clientId) throw new Error("Enter and save the Google OAuth Web Client ID first.");
-  await loadGoogleIdentity();
-  return new Promise((resolve, reject) => {
-    const client = window.google.accounts.oauth2.initTokenClient({ client_id: clientId, scope: DRIVE_SCOPE, callback: (r) => {
-      if (r.error) return reject(new Error(r.error_description || r.error));
-      setDriveToken(r.access_token, r.expires_in);
-      resolve(r.access_token);
-    }, error_callback: (e) => reject(new Error(e?.message || e?.type || "Google authorization failed")) });
-    client.requestAccessToken({ prompt: "consent" });
-  });
-}
-function renderDriveStatus() {
-  const connected = Boolean(driveToken());
-  if ($2("#driveStatus")) $2("#driveStatus").textContent = connected ? "Connected for this browser session" : "Not connected";
-  if ($2("#driveConnectBtn")) $2("#driveConnectBtn").textContent = connected ? "Reconnect Google Drive" : "Connect Google Drive";
-  if ($2("#receiptDriveStatus")) $2("#receiptDriveStatus").textContent = connected ? "Google Drive connected" : "Connect Google Drive in Settings before uploading a receipt";
-}
-function safeName(v) {
-  return String(v || "receipt").trim().replace(/[^a-zA-Z0-9._-]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 90) || "receipt";
-}
-async function uploadReceiptToDrive(file, { month, date, name: name4 }) {
-  if (!file) return { receiptProvider: null, receiptFileId: null, receiptFileName: null, receiptUrl: null, receiptFolderId: null };
-  if (!file.type.startsWith("image/")) throw new Error("Receipt must be an image file");
-  if (file.size > 10 * 1024 * 1024) throw new Error("Receipt image must be 10 MB or smaller");
-  const token = driveToken();
-  if (!token) throw new Error("Google Drive is not connected. Open Settings and connect it before uploading a receipt.");
-  const ext = (file.name.match(/\.[a-zA-Z0-9]{1,8}$/) || [".jpg"])[0], driveName = `${month}__${date}__${safeName(name4)}__${Date.now()}${ext}`;
-  const metadata = { name: driveName, parents: [DRIVE_FOLDER_ID], description: "WalCon receipt image" };
-  const form = new FormData();
-  form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
-  form.append("file", file, file.name);
-  const response = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink", { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data?.error?.message || `Drive upload failed (${response.status})`);
-  return { receiptProvider: "google-drive", receiptFileId: data.id, receiptFileName: data.name || driveName, receiptUrl: data.webViewLink || `https://drive.google.com/file/d/${data.id}/view`, receiptFolderId: DRIVE_FOLDER_ID };
-}
-async function deleteDriveReceipt(fileId) {
-  if (!fileId) return;
-  const token = driveToken();
-  if (!token) {
-    toast("Transaction removed. Drive receipt was retained because Google Drive is not connected.", true);
-    return;
-  }
-  const response = await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
-  if (!response.ok && response.status !== 404) {
-    const data = await response.json().catch(() => ({}));
-    throw new Error(data?.error?.message || `Drive delete failed (${response.status})`);
-  }
-}
-async function saveTransaction(event) {
-  event.preventDefault();
-  clearError();
-  const type = state.transactionType, categoryId = $2("#transactionCategory").value, lineItem = $2("#transactionLine").value, name4 = $2("#transactionName").value.trim(), date = $2("#transactionDate").value, sourceId = $2("#transactionSource").value, amount = parseIDR($2("#transactionAmount").value), notes = $2("#transactionNotes").value.trim(), c = category(categoryId), s = source(sourceId), month = date?.slice(0, 7);
-  if (!c || !lineItem || !name4 || !date || !s || amount <= 0) return toast("Complete category, line item, name, date, balance source and amount");
-  let budgetId = null;
-  if (type === "expense" && $2("#transactionLinked").checked) {
-    const b = await findBudgetFor(month, categoryId, lineItem);
-    if (!b) return toast("No matching budget item. Add budget first or turn budget linking off.");
-    budgetId = b.id;
-  }
-  let receipt = { receiptProvider: null, receiptFileId: null, receiptFileName: null, receiptUrl: null, receiptFolderId: null };
-  try {
-    const file = type === "expense" ? $2("#transactionReceipt").files?.[0] : null;
-    if (file) {
-      toast("Uploading receipt to Google Drive\u2026", true);
-      receipt = await uploadReceiptToDrive(file, { month, date, name: name4 });
-    }
-    const sourceRef = doc(db, ...userPath("balanceSources", sourceId)), txRef = doc(collection(db, ...userPath("transactions"))), delta = type === "income" ? amount : -amount;
-    await runTransaction(db, async (tx) => {
-      const sourceSnap = await tx.get(sourceRef);
-      if (!sourceSnap.exists()) throw new Error("Balance source no longer exists");
-      const sourceData = sourceSnap.data();
-      tx.update(sourceRef, { currentBalance: Number(sourceData.currentBalance || 0) + delta, updatedAt: serverTimestamp() });
-      tx.set(txRef, { type, month, date, categoryId, categoryName: c.name, lineItem, name: name4, sourceId, sourceName: s.name, amount, notes, budgetId, ...receipt, createdAt: serverTimestamp() });
-    });
-    $2("#transactionForm").reset();
-    $2("#transactionLinked").checked = true;
-    $2("#transactionDate").value = todayISO();
-    toast(type === "income" ? "Income saved and balance increased" : "Expense saved and balance reduced");
-    if (month !== state.month) changeMonth(month);
-    showView("home");
-  } catch (e) {
-    showError(e, "Save transaction failed");
-  }
-}
-async function deleteTransaction(id) {
-  const t = state.transactions.find((x2) => x2.id === id);
-  if (!t || !confirm(`Remove \u201C${t.name || "transaction"}\u201D and reverse its balance effect?`)) return;
-  try {
-    const sourceRef = doc(db, ...userPath("balanceSources", t.sourceId)), txRef = doc(db, ...userPath("transactions", id)), reverse = t.type === "income" ? -Number(t.amount || 0) : Number(t.amount || 0);
-    await runTransaction(db, async (tx) => {
-      const s = await tx.get(sourceRef);
-      if (s.exists()) tx.update(sourceRef, { currentBalance: Number(s.data().currentBalance || 0) + reverse, updatedAt: serverTimestamp() });
-      if (t.debtId) {
-        const dRef = doc(db, ...userPath("debts", t.debtId)), dSnap = await tx.get(dRef);
-        if (dSnap.exists()) tx.update(dRef, { currentBalance: Number(dSnap.data().currentBalance || 0) + Number(t.amount || 0), updatedAt: serverTimestamp() });
-      }
-      tx.delete(txRef);
-      if (t.debtId) tx.delete(doc(db, ...userPath("debtPayments", id)));
-    });
-    if (t.receiptProvider === "google-drive" && t.receiptFileId) {
+  }, true);
+  document.addEventListener("click", async (e) => {
+    const c = e.target.closest?.("[data-delete-category]");
+    if (c) {
       try {
-        await deleteDriveReceipt(t.receiptFileId);
-      } catch (e) {
-        showError(e, "Transaction removed but Drive receipt deletion failed");
+        await markDeleted("category", c.dataset.deleteCategory);
+      } catch (err) {
+        console.warn(err);
+      }
+      return;
+    }
+    const s = e.target.closest?.("[data-delete-source]");
+    if (s) {
+      try {
+        await markDeleted("source", s.dataset.deleteSource);
+      } catch (err) {
+        console.warn(err);
       }
     }
-    toast("Transaction removed and balance reversed");
-  } catch (e) {
-    showError(e, "Remove transaction failed");
-  }
+  }, true);
 }
-async function payDebt(id) {
-  const d = state.debts.find((x2) => x2.id === id), sourceId = $2("#mDebtSource").value, amount = parseIDR($2("#mDebtPayAmount").value), s = source(sourceId);
-  if (!d || !s || amount <= 0) return toast("Source and payment amount required");
-  const paid = Math.min(amount, Number(d.currentBalance || 0));
-  let budgetId = null;
-  if ($2("#mDebtLinkBudget").checked) {
-    budgetId = state.budgets.find((b) => b.categoryId === d.categoryId && b.lineItem === "Payment")?.id || null;
-    if (!budgetId) return toast("No matching Debt \u2192 Payment budget this month");
-  }
-  try {
-    const debtRef = doc(db, ...userPath("debts", id)), sourceRef = doc(db, ...userPath("balanceSources", sourceId)), txRef = doc(collection(db, ...userPath("transactions"))), payRef = doc(db, ...userPath("debtPayments", txRef.id));
-    await runTransaction(db, async (tx) => {
-      const dd = await tx.get(debtRef), ss = await tx.get(sourceRef);
-      if (!dd.exists() || !ss.exists()) throw new Error("Debt or payment source missing");
-      tx.update(debtRef, { currentBalance: Math.max(0, Number(dd.data().currentBalance || 0) - paid), updatedAt: serverTimestamp() });
-      tx.update(sourceRef, { currentBalance: Number(ss.data().currentBalance || 0) - paid, updatedAt: serverTimestamp() });
-      tx.set(txRef, { type: "expense", month: state.month, date: todayISO(), categoryId: d.categoryId, categoryName: d.categoryName, lineItem: "Payment", name: `Debt payment \u2014 ${d.name}`, sourceId, sourceName: s.name, amount: paid, notes: "Debt payment", budgetId, debtId: id, createdAt: serverTimestamp() });
-      tx.set(payRef, { debtId: id, debtName: d.name, amount: paid, sourceId, sourceName: s.name, month: state.month, date: todayISO(), createdAt: serverTimestamp() });
-    });
-    closeModal();
-    toast("Debt payment applied");
-  } catch (e) {
-    showError(e, "Debt payment failed");
-  }
+async function init() {
+  await setPersistence(auth, browserLocalPersistence).catch(() => {
+  });
+  installUI();
+  onAuthStateChanged(auth, (user) => {
+    if (user) seedDefaults(user).catch((e) => console.warn("Deferred default seed", e));
+  });
+  window.WALCON_V12_AUTH_READY = true;
 }
-async function toggleBill(id) {
-  const current = state.billStatus.find((x2) => x2.billId === id);
-  try {
-    await setDoc(doc(db, ...userPath("billStatus", `${state.month}_${id}`)), { billId: id, month: state.month, paid: !current?.paid, updatedAt: serverTimestamp() }, { merge: true });
-  } catch (e) {
-    showError(e, "Update bill failed");
-  }
-}
-onAuthStateChanged(auth, async (user) => {
-  stopListeners();
-  state.user = user;
-  if (!user) {
-    showView("auth");
-    return;
-  }
-  if ($2("#settingsEmail")) $2("#settingsEmail").textContent = user.email || user.uid;
-  try {
-    await initializeDefaultsOnce();
-    changeMonth(monthKey());
-    showView("home");
-  } catch (e) {
-    showError(e, "Firebase connection retrying");
-    changeMonth(monthKey());
-    showView("home");
-  }
+init().catch((e) => {
+  console.error(e);
+  msg(`Authentication setup failed: ${e?.message || e}`);
 });
-$2("#loginBtn").onclick = async () => {
-  try {
-    $2("#authMessage").textContent = "";
-    await signInWithEmailAndPassword(auth, $2("#authEmail").value.trim(), $2("#authPassword").value);
-  } catch (e) {
-    $2("#authMessage").textContent = e.message;
-  }
-};
-$2("#signupBtn").onclick = async () => {
-  try {
-    $2("#authMessage").textContent = "";
-    await createUserWithEmailAndPassword(auth, $2("#authEmail").value.trim(), $2("#authPassword").value);
-  } catch (e) {
-    $2("#authMessage").textContent = e.message;
-  }
-};
-$2("#logoutBtn").onclick = () => signOut(auth);
-$2("#modalClose").onclick = closeModal;
-$2("#modal").addEventListener("click", (e) => {
-  if (e.target.id === "modal") closeModal();
-});
-$2("#transactionForm").addEventListener("submit", saveTransaction);
-$2("#transactionCategory").addEventListener("change", refreshTransactionLines);
-$2("#transactionLine").addEventListener("change", updateBudgetMatchHint);
-$2("#transactionDate").addEventListener("change", updateBudgetMatchHint);
-$2("#transactionLinked").addEventListener("change", updateBudgetMatchHint);
-$2("#budgetMonth").addEventListener("change", (e) => changeMonth(e.target.value));
-$2("#billMonth").addEventListener("change", (e) => changeMonth(e.target.value));
-$2("#historyMonth").addEventListener("change", (e) => changeMonth(e.target.value));
-$2("#saveSettingsBtn").onclick = async () => {
-  const warningThreshold = Math.max(50, Math.min(99, Number($2("#warningThreshold").value || 85)));
-  try {
-    await setDoc(doc(db, ...userPath("settings", "preferences")), { warningThreshold, currency: "IDR", updatedAt: serverTimestamp() }, { merge: true });
-    toast("Settings saved");
-  } catch (e) {
-    showError(e, "Save settings failed");
-  }
-};
-$2("#saveDriveClientBtn").onclick = () => {
-  const v = $2("#driveClientId").value.trim();
-  if (v) localStorage.setItem(DRIVE_CLIENT_KEY, v);
-  else localStorage.removeItem(DRIVE_CLIENT_KEY);
-  toast(v ? "Google OAuth Client ID saved in this browser" : "Google OAuth Client ID cleared");
-  renderDriveStatus();
-};
-$2("#driveConnectBtn").onclick = async () => {
-  try {
-    const v = $2("#driveClientId").value.trim();
-    if (v) localStorage.setItem(DRIVE_CLIENT_KEY, v);
-    await connectDrive();
-    toast("Google Drive connected");
-  } catch (e) {
-    showError(e, "Google Drive connection failed");
-  }
-};
-$2("#driveDisconnectBtn").onclick = () => {
-  sessionStorage.removeItem(DRIVE_TOKEN_KEY);
-  sessionStorage.removeItem(DRIVE_TOKEN_EXPIRY_KEY);
-  renderDriveStatus();
-  toast("Google Drive disconnected");
-};
-addEventListener("online", () => $2("#networkState").textContent = "online");
-addEventListener("offline", () => $2("#networkState").textContent = "offline");
-$2("#networkState").textContent = navigator.onLine ? "online" : "offline";
-document.addEventListener("focusout", (e) => {
-  if (e.target.classList?.contains("idr-input")) formatIDRInput(e.target);
-});
-document.addEventListener("change", (e) => {
-  if (e.target.id === "mBudgetCat") refreshModalBudgetLines();
-});
-document.addEventListener("click", async (e) => {
-  const txType = e.target.closest("[data-transaction-type]");
-  if (txType) {
-    setTransactionType(txType.dataset.transactionType);
-    return;
-  }
-  const openTx = e.target.closest("[data-open-transaction]");
-  if (openTx) {
-    state.transactionType = openTx.dataset.openTransaction === "income" ? "income" : "expense";
-    showView("transaction");
-    setTransactionType(state.transactionType);
-    return;
-  }
-  const go = e.target.closest("[data-view-go]");
-  if (go) {
-    showView(go.dataset.viewGo);
-    return;
-  }
-  const open = e.target.closest("[data-open]");
-  if (open) {
-    openModal(open.dataset.open);
-    return;
-  }
-  const filter = e.target.closest("[data-filter]");
-  if (filter) {
-    state.categoryFilter = filter.dataset.filter;
-    $$("#categoryFilters .chip").forEach((x2) => x2.classList.toggle("active", x2 === filter));
-    renderCategories();
-    return;
-  }
-  const editSource = e.target.closest("[data-edit-source]");
-  if (editSource) {
-    openModal("balance", editSource.dataset.editSource);
-    return;
-  }
-  const deleteSource = e.target.closest("[data-delete-source]");
-  if (deleteSource && confirm("Remove this balance source? Existing transaction history is kept.")) {
-    try {
-      await deleteDoc(doc(db, ...userPath("balanceSources", deleteSource.dataset.deleteSource)));
-      toast("Balance source removed");
-    } catch (err) {
-      showError(err, "Remove source failed");
-    }
-    return;
-  }
-  const editCategory = e.target.closest("[data-edit-category]");
-  if (editCategory) {
-    openModal("category", editCategory.dataset.editCategory);
-    return;
-  }
-  const addLineBtn = e.target.closest("[data-add-line]");
-  if (addLineBtn) {
-    openModal("line", addLineBtn.dataset.addLine);
-    return;
-  }
-  const removeLineBtn = e.target.closest("[data-remove-line]");
-  if (removeLineBtn) {
-    await removeLine(removeLineBtn.dataset.removeLine, removeLineBtn.dataset.line);
-    return;
-  }
-  const deleteCategory = e.target.closest("[data-delete-category]");
-  if (deleteCategory && confirm("Remove this category? It will stay deleted. Existing history and budgets are kept.")) {
-    try {
-      await deleteDoc(doc(db, ...userPath("categories", deleteCategory.dataset.deleteCategory)));
-      toast("Category removed");
-    } catch (err) {
-      showError(err, "Remove category failed");
-    }
-    return;
-  }
-  const editBudget = e.target.closest("[data-edit-budget]");
-  if (editBudget) {
-    openModal("budget", editBudget.dataset.editBudget);
-    return;
-  }
-  const deleteBudget = e.target.closest("[data-delete-budget]");
-  if (deleteBudget && confirm("Remove this monthly budget item? Existing linked expenses remain in history.")) {
-    try {
-      await deleteDoc(doc(db, ...userPath("budgets", deleteBudget.dataset.deleteBudget)));
-      toast("Budget removed");
-    } catch (err) {
-      showError(err, "Remove budget failed");
-    }
-    return;
-  }
-  const editDebt = e.target.closest("[data-edit-debt]");
-  if (editDebt) {
-    openModal("debt", editDebt.dataset.editDebt);
-    return;
-  }
-  const payDebtBtn = e.target.closest("[data-pay-debt]");
-  if (payDebtBtn) {
-    openModal("payDebt", payDebtBtn.dataset.payDebt);
-    return;
-  }
-  const deleteDebt = e.target.closest("[data-delete-debt]");
-  if (deleteDebt && confirm("Remove this debt item? Payment history is kept.")) {
-    try {
-      await deleteDoc(doc(db, ...userPath("debts", deleteDebt.dataset.deleteDebt)));
-      toast("Debt removed");
-    } catch (err) {
-      showError(err, "Remove debt failed");
-    }
-    return;
-  }
-  const toggle = e.target.closest("[data-toggle-bill]");
-  if (toggle) {
-    await toggleBill(toggle.dataset.toggleBill);
-    return;
-  }
-  const deleteBill = e.target.closest("[data-delete-bill]");
-  if (deleteBill && confirm("Remove this recurring bill?")) {
-    try {
-      await deleteDoc(doc(db, ...userPath("bills", deleteBill.dataset.deleteBill)));
-      toast("Bill removed");
-    } catch (err) {
-      showError(err, "Remove bill failed");
-    }
-    return;
-  }
-  const deleteTx = e.target.closest("[data-delete-transaction]");
-  if (deleteTx) {
-    await deleteTransaction(deleteTx.dataset.deleteTransaction);
-    return;
-  }
-  const saveSourceBtn = e.target.closest("[data-save-source]");
-  if (saveSourceBtn) {
-    await saveSource(saveSourceBtn.dataset.saveSource);
-    return;
-  }
-  const saveCategoryBtn = e.target.closest("[data-save-category]");
-  if (saveCategoryBtn) {
-    await saveCategory(saveCategoryBtn.dataset.saveCategory);
-    return;
-  }
-  const saveLineBtn = e.target.closest("[data-save-line]");
-  if (saveLineBtn) {
-    await addLine(saveLineBtn.dataset.saveLine);
-    return;
-  }
-  const saveBudgetBtn = e.target.closest("[data-save-budget]");
-  if (saveBudgetBtn) {
-    await saveBudget(saveBudgetBtn.dataset.saveBudget);
-    return;
-  }
-  const saveDebtBtn = e.target.closest("[data-save-debt]");
-  if (saveDebtBtn) {
-    await saveDebt(saveDebtBtn.dataset.saveDebt);
-    return;
-  }
-  const applyDebt = e.target.closest("[data-apply-debt]");
-  if (applyDebt) {
-    await payDebt(applyDebt.dataset.applyDebt);
-    return;
-  }
-  if (e.target.closest("[data-save-bill]")) {
-    await saveBill();
-    return;
-  }
-});
-$2("#driveFolderLink").href = DRIVE_FOLDER_URL;
-showView("loading");
 /*! Bundled license information:
 
 @firebase/util/dist/index.esm2017.js:
@@ -21918,6 +20810,8 @@ showView("loading");
 @firebase/util/dist/index.esm2017.js:
 @firebase/util/dist/index.esm2017.js:
 @firebase/logger/dist/esm/index.esm2017.js:
+@firebase/firestore/dist/index.esm2017.js:
+@firebase/firestore/dist/index.esm2017.js:
 @firebase/firestore/dist/index.esm2017.js:
 @firebase/firestore/dist/index.esm2017.js:
 @firebase/firestore/dist/index.esm2017.js:
@@ -21949,6 +20843,8 @@ showView("loading");
 
 @firebase/util/dist/index.esm2017.js:
 @firebase/util/dist/index.esm2017.js:
+@firebase/firestore/dist/index.esm2017.js:
+@firebase/firestore/dist/index.esm2017.js:
 @firebase/firestore/dist/index.esm2017.js:
 @firebase/firestore/dist/index.esm2017.js:
 @firebase/firestore/dist/index.esm2017.js:
@@ -22030,6 +20926,7 @@ showView("loading");
 @firebase/firestore/dist/index.esm2017.js:
 @firebase/firestore/dist/index.esm2017.js:
 @firebase/firestore/dist/index.esm2017.js:
+@firebase/firestore/dist/index.esm2017.js:
   (**
    * @license
    * Copyright 2019 Google LLC
@@ -22080,7 +20977,10 @@ firebase/app/dist/esm/index.esm.js:
 @firebase/auth/dist/esm2017/index-35c79a8a.js:
 @firebase/auth/dist/esm2017/index-35c79a8a.js:
 @firebase/auth/dist/esm2017/index-35c79a8a.js:
-@firebase/auth/dist/esm2017/index-35c79a8a.js:
+@firebase/firestore/dist/index.esm2017.js:
+@firebase/firestore/dist/index.esm2017.js:
+@firebase/firestore/dist/index.esm2017.js:
+@firebase/firestore/dist/index.esm2017.js:
 @firebase/firestore/dist/index.esm2017.js:
 @firebase/firestore/dist/index.esm2017.js:
 @firebase/firestore/dist/index.esm2017.js:
@@ -23254,40 +22154,6 @@ firebase/app/dist/esm/index.esm.js:
 @firebase/firestore/dist/index.esm2017.js:
   (**
    * @license
-   * Copyright 2017 Google LLC
-   *
-   * Licensed under the Apache License, Version 2.0 (the "License");
-   * you may not use this file except in compliance with the License.
-   * You may obtain a copy of the License at
-   *
-   *   http://www.apache.org/licenses/LICENSE-2.0
-   *
-   * Unless required by applicable law or agreed to in writing, software
-   * distributed under the License is distributed on an "AS IS" BASIS,
-   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   * See the License for the specific language governing permissions and
-   * limitations under the License.
-   *)
-  (**
-   * @license
-   * Copyright 2019 Google LLC
-   *
-   * Licensed under the Apache License, Version 2.0 (the "License");
-   * you may not use this file except in compliance with the License.
-   * You may obtain a copy of the License at
-   *
-   *   http://www.apache.org/licenses/LICENSE-2.0
-   *
-   * Unless required by applicable law or agreed to in writing, software
-   * distributed under the License is distributed on an "AS IS" BASIS,
-   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   * See the License for the specific language governing permissions and
-   * limitations under the License.
-   *)
-
-@firebase/firestore/dist/index.esm2017.js:
-  (**
-   * @license
    * Copyright 2023 Google LLC
    *
    * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23319,7 +22185,6 @@ firebase/app/dist/esm/index.esm.js:
    * limitations under the License.
    *)
 
-@firebase/firestore/dist/index.esm2017.js:
 @firebase/firestore/dist/index.esm2017.js:
   (**
    * @license
@@ -23408,40 +22273,6 @@ firebase/app/dist/esm/index.esm.js:
   (**
    * @license
    * Copyright 2025 Google LLC
-   *
-   * Licensed under the Apache License, Version 2.0 (the "License");
-   * you may not use this file except in compliance with the License.
-   * You may obtain a copy of the License at
-   *
-   *   http://www.apache.org/licenses/LICENSE-2.0
-   *
-   * Unless required by applicable law or agreed to in writing, software
-   * distributed under the License is distributed on an "AS IS" BASIS,
-   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   * See the License for the specific language governing permissions and
-   * limitations under the License.
-   *)
-  (**
-   * @license
-   * Copyright 2020 Google LLC
-   *
-   * Licensed under the Apache License, Version 2.0 (the "License");
-   * you may not use this file except in compliance with the License.
-   * You may obtain a copy of the License at
-   *
-   *   http://www.apache.org/licenses/LICENSE-2.0
-   *
-   * Unless required by applicable law or agreed to in writing, software
-   * distributed under the License is distributed on an "AS IS" BASIS,
-   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   * See the License for the specific language governing permissions and
-   * limitations under the License.
-   *)
-
-@firebase/firestore/dist/index.esm2017.js:
-  (**
-   * @license
-   * Copyright 2022 Google LLC
    *
    * Licensed under the Apache License, Version 2.0 (the "License");
    * you may not use this file except in compliance with the License.
