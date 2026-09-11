@@ -1,7 +1,7 @@
 {
-  "name": "Wallet Chronicle",
-  "short_name": "Wallet",
-  "description": "Personal finance PWA for monthly budgeting, expenses, bills, debts and history.",
+  "name": "WalCon",
+  "short_name": "WalCon",
+  "description": "Personal finance PWA for balances, income, expenses, budgets, bills, debts and history.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
