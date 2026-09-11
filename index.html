@@ -2,107 +2,40 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#1D084B" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Wallet Chronicle" />
+  <meta name="apple-mobile-web-app-title" content="WalCon" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="apple-touch-icon" href="./icons/icon-192.png" />
-  <link rel="stylesheet" href="./styles.css?v=3" />
-  <title>Wallet Chronicle</title>
+  <link rel="stylesheet" href="./styles-v5.css?v=5" />
+  <title>WalCon</title>
 </head>
 <body>
 <div class="shell">
   <main class="phone">
-    <div class="statusbar"><span>Wallet Chronicle</span><span id="networkState">online</span></div>
-    <div id="configBanner" class="config-banner hidden">Firebase is not configured. Edit <strong>firebase-config.js</strong> with the Web App config from Firebase Console, then reload.</div>
+    <header class="statusbar"><strong>WalCon</strong><span id="networkState">online</span></header>
+    <div id="errorBanner" class="banner hidden"></div>
     <div class="app" id="app">
-      <section class="view active" data-view="loading"><div class="spinner"></div></section>
-
-      <section class="view" data-view="auth">
-        <div class="auth">
-          <div class="logo">W</div>
-          <h1>Wallet Chronicle</h1>
-          <p>Private monthly budgeting, expenses, bills and debt tracking backed by your own Firebase project.</p>
-          <div class="card auth-card">
-            <div class="field"><label>Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" /></div>
-            <div class="field"><label>Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Minimum 6 characters" /></div>
-            <div class="row2" style="margin-top:14px"><button id="loginBtn" class="btn primary">Log In</button><button id="signupBtn" class="btn">Create Account</button></div>
-            <div id="authMessage" class="small" style="margin-top:12px"></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="view" data-view="dashboard">
-        <div class="topbar"><div class="left"><div class="avatar" id="avatar">W</div><div><div class="subtle" id="monthLabel">Current month</div><div class="title">Overview</div></div></div><button id="logoutBtn" class="iconbtn" title="Log out">↪</button></div>
-        <div class="card"><div class="subtle">Remaining Total Balance</div><div class="big" id="dashRemaining">Rp 0</div><span id="dashStatus" class="pill green">No spending yet</span><div class="kpis"><div class="kpi"><div class="subtle">Start Budget</div><div class="v" id="dashBudget">Rp 0</div></div><div class="kpi"><div class="subtle">Spent</div><div class="v" id="dashSpent">Rp 0</div></div><div class="kpi"><div class="subtle">Unpaid</div><div class="v" id="dashUnpaid">0</div></div></div></div>
-        <div class="actions"><button class="btn primary" data-open="expense">Add Expense</button><button class="btn" data-view-go="budgets">Budget</button><button class="btn" data-view-go="bills">Checklist</button></div>
-        <div class="section-head"><strong>Category Remaining</strong><button class="link" data-view-go="categories">Manage</button></div>
-        <div id="dashboardCategories" class="card list"></div>
-        <div class="section-head"><strong>Recent Expenses</strong><button class="link" data-view-go="history">History</button></div>
-        <div id="recentExpenses" class="card list"></div>
-      </section>
-
-      <section class="view" data-view="budgets">
-        <div class="topbar"><div><div class="title">Monthly Budget</div><div class="subtle">Total, category and optional line-item budgets</div></div><button class="iconbtn" data-open="budgetSetup">✎</button></div>
-        <div class="card"><div class="field" style="margin:0"><label>Month</label><input id="budgetMonth" type="month" /></div><div class="big sm" id="budgetTotalLabel">Rp 0</div><div class="kpis"><div class="kpi"><div class="subtle">Spent</div><div class="v" id="budgetSpentLabel">Rp 0</div></div><div class="kpi"><div class="subtle">Left</div><div class="v" id="budgetLeftLabel">Rp 0</div></div><div class="kpi"><div class="subtle">Alerts</div><div class="v" id="budgetAlertLabel">0</div></div></div></div>
-        <div class="section-head"><strong>Category Status</strong><button class="link" data-view-go="categories">Add category</button></div>
-        <div id="budgetCards"></div>
-      </section>
-
-      <section class="view" data-view="categories">
-        <div class="topbar"><div><div class="title">Categories</div><div class="subtle">General defaults are editable; custom categories can be added anytime</div></div><button class="iconbtn" data-open="category">＋</button></div>
-        <div id="categoryList"></div>
-      </section>
-
-      <section class="view" data-view="bills">
-        <div class="topbar"><div><div class="title">Monthly Checklist</div><div class="subtle">New month starts unpaid automatically</div></div><button class="iconbtn" data-open="bill">＋</button></div>
-        <div class="card"><div class="field" style="margin:0"><label>Month</label><input id="billMonth" type="month" /></div></div>
-        <div class="section-head"><strong>Bill templates</strong><span class="subtle">Tap switch to mark paid</span></div>
-        <div id="billList" class="card list"></div>
-      </section>
-
-      <section class="view" data-view="debts">
-        <div class="topbar"><div><div class="title">Debt Tracker</div><div class="subtle">Balance, payments and payoff progress</div></div><button class="iconbtn" data-open="debt">＋</button></div>
-        <div class="card"><div class="subtle">Total Debt Remaining</div><div class="big" id="debtTotal">Rp 0</div></div>
-        <div id="debtList"></div>
-      </section>
-
-      <section class="view" data-view="history">
-        <div class="topbar"><div><div class="title">History</div><div class="subtle">Browse any stored month</div></div><button class="iconbtn" data-open="expense">＋</button></div>
-        <div class="card"><div class="field" style="margin:0"><label>Month</label><input id="historyMonth" type="month" /></div></div>
-        <div id="historySummary" class="card" style="margin-top:10px"></div>
-        <div class="section-head"><strong>Expenses</strong></div>
-        <div id="historyList" class="card list"></div>
-      </section>
-
-      <section class="view" data-view="settings">
-        <div class="topbar"><div><div class="title">Settings</div><div class="subtle">Firebase-backed PWA</div></div><div></div></div>
-        <div class="card list">
-          <div class="item"><div class="grow"><div class="name">Signed in as</div><div class="meta" id="settingsEmail">—</div></div></div>
-          <div class="item"><div class="grow"><div class="name">Budget alert threshold</div><div class="meta">Yellow at 85%; red at 100%+</div></div></div>
-          <div class="item"><div class="grow"><div class="name">Data storage</div><div class="meta">Cloud Firestore under your authenticated UID</div></div></div>
-        </div>
-      </section>
+      <section class="view active" data-view="loading"><div class="loader"></div></section>
+      <section class="view" data-view="auth"><div class="auth-wrap"><div class="logo">W</div><h1>Wallet Control</h1><p>Track balances, expenses, budgets and debts with Firebase-backed data.</p><div class="card auth-card"><label>Email<input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="Minimum 6 characters"></label><div class="grid2"><button id="loginBtn" class="btn primary">Log In</button><button id="signupBtn" class="btn">Create Account</button></div><div id="authMessage" class="helper"></div></div></div></section>
+      <section class="view" data-view="home"><div class="topbar"><div><div class="eyebrow" id="homeMonthLabel">Current month</div><h2>Home</h2></div><button id="logoutBtn" class="round">↪</button></div><div class="card hero-card"><div class="eyebrow">Total available balance</div><div class="hero-number" id="homeBalance">Rp 0,00</div><div class="summary3"><div><span>Budget left</span><strong id="homeBudgetLeft">Rp 0,00</strong></div><div><span>Spent</span><strong id="homeSpent">Rp 0,00</strong></div><div><span>Sources</span><strong id="homeSourceCount">0</strong></div></div></div><div class="section-title"><strong>Balance sources</strong><button class="link" data-view-go="balances">Manage</button></div><div id="homeBalances" class="hscroll"></div><div class="section-title"><strong>Expense summary by category</strong><span class="muted" id="graphTotal"></span></div><div class="card graph-card"><div class="donut-wrap"><div id="expenseDonut" class="donut"><div><strong id="donutAmount">Rp 0</strong><span>This month</span></div></div></div><div id="expenseLegend" class="legend"></div></div><div class="section-title"><strong>Recent expenses</strong><button class="link" data-view-go="history">History</button></div><div id="recentExpenses" class="card list"></div></section>
+      <section class="view" data-view="balances"><div class="topbar"><div><div class="eyebrow">Source of funds</div><h2>Balances</h2></div><button class="round" data-open="balance">＋</button></div><div class="card"><div class="eyebrow">Total balance</div><div class="hero-number small" id="balanceTotal">Rp 0,00</div></div><div id="balanceList" class="stack"></div></section>
+      <section class="view" data-view="categories"><div class="topbar"><div><div class="eyebrow">Editable structure</div><h2>Categories & line items</h2></div><button class="round" data-open="category">＋</button></div><div class="filter-row" id="categoryFilters"><button class="chip active" data-filter="all">All</button><button class="chip" data-filter="income">Income</button><button class="chip" data-filter="need">Needs</button><button class="chip" data-filter="want">Wants</button><button class="chip" data-filter="debt">Debt</button></div><div id="categoryList" class="stack"></div></section>
+      <section class="view" data-view="expense"><div class="topbar"><div><div class="eyebrow">Transaction entry</div><h2>Add expense</h2></div><div></div></div><form id="expenseForm" class="card form-card"><div class="budget-mode"><label class="switchline"><input id="expenseLinked" type="checkbox" checked><span>Link this expense to monthly budget</span></label><div id="budgetMatchHint" class="helper">Choose a category and line item that has a budget this month.</div></div><label>Category<select id="expenseCategory" required><option value="">Select Category</option></select></label><label>Line item<select id="expenseLine" required><option value="">Select Line Item</option></select></label><label>Transaction name<input id="expenseName" required placeholder="e.g. Weekly groceries"></label><div class="grid2"><label>Date<input id="expenseDate" type="date" required></label><label>Payment method<select id="expenseSource" required><option value="">Select source of fund</option></select></label></div><label>Amount (IDR)<input id="expenseAmount" class="idr-input" inputmode="decimal" required placeholder="0,00"></label><label>Notes<textarea id="expenseNotes" placeholder="Optional notes"></textarea></label><label>Bill photo / receipt<input id="expenseReceipt" type="file" accept="image/*" capture="environment"><span class="helper">Optional. Stored in Firebase Storage under your account.</span></label><button class="btn primary full" type="submit">Save Expense</button></form></section>
+      <section class="view" data-view="budgets"><div class="topbar"><div><div class="eyebrow">Line-item budgets</div><h2>Budget</h2></div><button class="round" data-open="budget">＋</button></div><div class="card month-card"><label>Month<input id="budgetMonth" type="month"></label><div class="summary3"><div><span>Budget</span><strong id="budgetTotal">Rp 0,00</strong></div><div><span>Spent linked</span><strong id="budgetSpent">Rp 0,00</strong></div><div><span>Remaining</span><strong id="budgetRemaining">Rp 0,00</strong></div></div></div><div id="budgetList" class="stack"></div></section>
+      <section class="view" data-view="debts"><div class="topbar"><div><div class="eyebrow">Payoff tracking</div><h2>Debt</h2></div><button class="round" data-open="debt">＋</button></div><div class="card"><div class="eyebrow">Total debt remaining</div><div class="hero-number small" id="debtTotal">Rp 0,00</div></div><div id="debtList" class="stack"></div></section>
+      <section class="view" data-view="bills"><div class="topbar"><div><div class="eyebrow">Recurring checklist</div><h2>Bills</h2></div><button class="round" data-open="bill">＋</button></div><div class="card month-card"><label>Month<input id="billMonth" type="month"></label></div><div id="billList" class="card list"></div></section>
+      <section class="view" data-view="history"><div class="topbar"><div><div class="eyebrow">Transactions</div><h2>History</h2></div><div></div></div><div class="card month-card"><label>Month<input id="historyMonth" type="month"></label></div><div id="historyList" class="card list"></div></section>
+      <section class="view" data-view="more"><div class="topbar"><div><div class="eyebrow">Manage</div><h2>More</h2></div><div></div></div><div class="menu-grid"><button class="menu-card" data-view-go="balances"><span>💰</span><strong>Balances</strong><small>Sources of money</small></button><button class="menu-card" data-view-go="categories"><span>▦</span><strong>Categories</strong><small>Categories & line items</small></button><button class="menu-card" data-view-go="bills"><span>✓</span><strong>Bills</strong><small>Monthly checklist</small></button><button class="menu-card" data-view-go="history"><span>◷</span><strong>History</strong><small>Past expenses</small></button><button class="menu-card" data-view-go="settings"><span>⚙</span><strong>Settings</strong><small>App preferences</small></button></div></section>
+      <section class="view" data-view="settings"><div class="topbar"><div><div class="eyebrow">Preferences</div><h2>Settings</h2></div><div></div></div><div class="card form-card"><label>Currency<input value="IDR — Indonesian Rupiah" disabled></label><label>Budget warning threshold (%)<input id="warningThreshold" type="number" min="50" max="99" value="85"></label><button id="saveSettingsBtn" class="btn primary full" type="button">Save Settings</button></div><div class="card info-card"><strong>Firebase account</strong><span id="settingsEmail"></span><small>All finance records are scoped to your authenticated Firebase UID.</small></div></section>
     </div>
-
-    <nav id="bottomNav" class="bottomnav hidden">
-      <button class="nav active" data-view-go="dashboard"><span class="nicon">⌂</span><span>Home</span></button>
-      <button class="nav" data-view-go="budgets"><span class="nicon">▣</span><span>Budget</span></button>
-      <button class="nav add" data-open="expense">＋</button>
-      <button class="nav" data-view-go="debts"><span class="nicon">◔</span><span>Debt</span></button>
-      <button class="nav" data-view-go="settings"><span class="nicon">•••</span><span>More</span></button>
-    </nav>
-
-    <div id="modal" class="modal hidden"><div class="sheet"><div class="sheet-head"><h3 id="modalTitle">Add</h3><button id="modalClose" class="close">×</button></div><div id="modalBody"></div></div></div>
-    <div id="toast" class="toast">Saved</div>
+    <nav id="bottomNav" class="bottomnav hidden"><button class="nav active" data-view-go="home"><span>⌂</span><small>Home</small></button><button class="nav" data-view-go="budgets"><span>▣</span><small>Budget</small></button><button class="nav add" data-view-go="expense">＋</button><button class="nav" data-view-go="debts"><span>◔</span><small>Debt</small></button><button class="nav" data-view-go="more"><span>•••</span><small>More</small></button></nav>
+    <div id="modal" class="modal hidden"><div class="sheet"><div class="sheet-head"><h3 id="modalTitle">Edit</h3><button id="modalClose" class="close">×</button></div><div id="modalBody"></div></div></div><div id="toast" class="toast"></div>
   </main>
 </div>
-<script type="module" src="./app.js?v=3"></script>
-<script type="module" src="./enhancements.js?v=1"></script>
-<script>
-if ('serviceWorker' in navigator) addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=3', { updateViaCache: 'none' }).then(r=>r.update()).catch(console.error));
-</script>
+<script type="module" src="./app-v5.js?v=5"></script>
+<script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=5',{updateViaCache:'none'}).then(r=>r.update()).catch(console.error));}</script>
 </body>
 </html>
