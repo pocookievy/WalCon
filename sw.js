@@ -1,9 +1,10 @@
-const CACHE = 'wallet-chronicle-firebase-v2';
+const CACHE = 'wallet-chronicle-firebase-v3';
 const STATIC_ASSETS = [
   './',
   './index.html',
   './styles.css',
   './app.js',
+  './enhancements.js',
   './firebase-config.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
@@ -27,7 +28,7 @@ self.addEventListener('fetch', event => {
 
   const path = url.pathname;
   const networkFirst = event.request.mode === 'navigate' ||
-    path.endsWith('/app.js') || path.endsWith('/firebase-config.js') || path.endsWith('/styles.css') || path.endsWith('/manifest.webmanifest');
+    path.endsWith('/app.js') || path.endsWith('/enhancements.js') || path.endsWith('/firebase-config.js') || path.endsWith('/styles.css') || path.endsWith('/manifest.webmanifest');
 
   if (networkFirst) {
     event.respondWith(
