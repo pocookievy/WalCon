@@ -1,4 +1,4 @@
-const CACHE = 'wallet-chronicle-firebase-v1';
+const CACHE = 'wallet-chronicle-firebase-v2';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -16,26 +16,30 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
-  );
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))));
   self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
-  if (url.origin !== self.location.origin) return; // Never cache Firebase/Auth/Firestore requests.
+  if (url.origin !== self.location.origin) return;
 
-  if (event.request.mode === 'navigate') {
+  const path = url.pathname;
+  const networkFirst = event.request.mode === 'navigate' ||
+    path.endsWith('/app.js') || path.endsWith('/firebase-config.js') || path.endsWith('/styles.css') || path.endsWith('/manifest.webmanifest');
+
+  if (networkFirst) {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'no-store' })
         .then(response => {
-          const copy = response.clone();
-          caches.open(CACHE).then(cache => cache.put('./index.html', copy));
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE).then(cache => cache.put(event.request, copy));
+          }
           return response;
         })
-        .catch(() => caches.match('./index.html'))
+        .catch(() => caches.match(event.request).then(r => r || caches.match('./index.html')))
     );
     return;
   }
