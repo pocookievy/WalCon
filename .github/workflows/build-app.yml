@@ -16,8 +16,16 @@ jobs:
         with:
           node-version: '22'
       - run: npm install
+      - name: Prepare bundle source
+        run: |
+          cp app-v6.js app-build.js
+          sed -i 's#https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js#firebase/app#g' app-build.js
+          sed -i 's#https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js#firebase/auth#g' app-build.js
+          sed -i 's#https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js#firebase/firestore#g' app-build.js
       - name: Bundle application
-        run: npx esbuild app-v6.js --bundle --format=esm --platform=browser --outfile=app-bundle.js
+        run: npx esbuild app-build.js --bundle --format=esm --platform=browser --outfile=app-bundle.js
+      - name: Validate bundle
+        run: node --check app-bundle.js
       - name: Commit bundle
         run: |
           git config user.name "github-actions[bot]"
