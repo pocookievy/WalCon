@@ -14,6 +14,10 @@ window.addEventListener('unhandledrejection', event => {
   showBootError(`WalCon startup error: ${reason}`);
 });
 
+window.addEventListener('walcon-template-error', event => {
+  showBootError(`WalCon default template error: ${event?.detail || 'Unknown error'}`);
+});
+
 try {
   if (!localStorage.getItem('walcon.googleDriveClientId')) {
     localStorage.setItem(
@@ -46,8 +50,8 @@ async function bootWalCon() {
       );
     }
 
-    if (hadController && sessionStorage.getItem('walcon-sw-reload-v9') !== 'done') {
-      sessionStorage.setItem('walcon-sw-reload-v9', 'done');
+    if (hadController && sessionStorage.getItem('walcon-sw-reload-v10') !== 'done') {
+      sessionStorage.setItem('walcon-sw-reload-v10', 'done');
       location.reload();
       return;
     }
@@ -58,7 +62,8 @@ async function bootWalCon() {
       }
     }, 15000);
 
-    await import(`./app-bundle.js?v=9&t=${Date.now()}`);
+    await import(`./app-bundle.js?v=10&t=${Date.now()}`);
+    await import(`./template-defaults-bundle.js?v=10&t=${Date.now()}`);
     window.__WALCON_APP_LOADED__ = true;
     clearTimeout(timeout);
   } catch (error) {
