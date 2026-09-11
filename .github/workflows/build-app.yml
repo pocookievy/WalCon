@@ -16,7 +16,7 @@ jobs:
         with:
           node-version: '22'
       - run: npm install
-      - name: Prepare bundle source
+      - name: Prepare resilient application bundle
         run: |
           cp app-v6.js app-build.js
           sed -i 's#https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js#firebase/app#g' app-build.js
@@ -26,28 +26,48 @@ jobs:
           from pathlib import Path
           p=Path('app-build.js')
           s=p.read_text()
+
+          # Historical syntax defect guard.
           bad="state.unsubs.push(onSnapshot(doc(db,...userPath('settings','preferences')),s=>{state.settings={warningThreshold:85,...(s.exists()?s.data():{})};renderAll();},e=>showError(e,'Load settings failed'));"
           good="state.unsubs.push(onSnapshot(doc(db,...userPath('settings','preferences')),s=>{state.settings={warningThreshold:85,...(s.exists()?s.data():{})};renderAll();},e=>showError(e,'Load settings failed')));"
           if bad in s:
               s=s.replace(bad,good,1)
+
+          # Firestore WebChannel can report false offline states on some mobile/browser networks.
+          # Force long polling in the production bundle for a more reliable GitHub Pages PWA connection.
+          s=s.replace('getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc,',
+                      'initializeFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc,',1)
+          s=s.replace('const db = getFirestore(app);',
+                      "const db = initializeFirestore(app,{experimentalForceLongPolling:true,useFetchStreams:false});",1)
+
+          # Always have the requested template visible while Firestore establishes a connection.
+          s=s.replace("user:null,month:monthKey(),categories:[],sources:[],transactions:[],budgets:[],debts:[],bills:[],billStatus:[],",
+                      "user:null,month:monthKey(),categories:DEFAULT_CATEGORIES.map(c=>({...c,lineItems:[...(c.lineItems||[])]})),sources:DEFAULT_SOURCES.map(s=>({...s})),transactions:[],budgets:[],debts:[],bills:[],billStatus:[],",1)
+
+          # A transient setup failure must not leave the application unsubscribed forever.
+          old="try{await initializeDefaultsOnce();changeMonth(monthKey());showView('home');}catch(e){showError(e,'Firebase setup failed');showView('home');}"
+          new="try{await initializeDefaultsOnce();changeMonth(monthKey());showView('home');}catch(e){showError(e,'Firebase connection retrying');changeMonth(monthKey());showView('home');}"
+          if old in s:
+              s=s.replace(old,new,1)
+
           p.write_text(s)
           PY
       - name: Bundle application
         run: npx esbuild app-build.js --bundle --format=esm --platform=browser --outfile=app-bundle.js
-      - name: Bundle authentication hotfix
-        run: npx esbuild auth-hotfix-v11-src.js --bundle --format=esm --platform=browser --outfile=auth-hotfix-v11-bundle.js
+      - name: Bundle authentication and template repair
+        run: npx esbuild auth-v12-src.js --bundle --format=esm --platform=browser --outfile=auth-v12-bundle.js
       - name: Validate bundles
         run: |
           node --check app-bundle.js
-          node --check auth-hotfix-v11-bundle.js
+          node --check auth-v12-bundle.js
       - name: Commit bundles
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app-bundle.js auth-hotfix-v11-bundle.js
+          git add app-bundle.js auth-v12-bundle.js
           if git diff --cached --quiet; then
             echo "No bundle changes"
           else
-            git commit -m "Build browser bundles"
+            git commit -m "Build resilient v12 browser bundles"
             git push
           fi
